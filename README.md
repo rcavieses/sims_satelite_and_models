@@ -4,11 +4,11 @@
 
 Curso de 5 días (35 horas) donde los estudiantes crean una simulación interactiva basada en datos satelitales reales y un modelo mental ecológico-urbano, explorando las consecuencias de distintos escenarios de desarrollo en su ciudad.
 
-**🌐 Sitio del curso:** https://TU_USUARIO.github.io/satelites-y-sims/
+**🌐 Sitio del curso:** https://rcavieses.github.io/sims_satelite_and_models/
 **🧠 NotebookLM del curso:** https://notebooklm.google.com/notebook/e98d58f1-92c9-4bb8-ba0f-c38e1b6109aa (resumen en audio y preguntas sobre los materiales)
 **📝 Carta descriptiva editable (Google Docs):** https://docs.google.com/document/d/10XGao9xnrxiKcDbR3FxOb4SU7lYVDQWX/edit?usp=sharing
 
-> ⚠️ Este repo usa el placeholder `TU_USUARIO/satelites-y-sims`. En cuanto crees el repositorio real en GitHub, corre `scripts/configurar_repo.sh <usuario> <repo>` para reemplazarlo en todos los archivos (ver [Configuración inicial](#-configuración-inicial-una-sola-vez)).
+> ⚠️ Este repo usa el placeholder `rcavieses/sims_satelite_and_models`. En cuanto crees el repositorio real en GitHub, corre `scripts/configurar_repo.sh <usuario> <repo>` para reemplazarlo en todos los archivos (ver [Configuración inicial](#-configuración-inicial-una-sola-vez)).
 
 ## 📚 Estructura del curso
 
@@ -29,7 +29,7 @@ Este repositorio contiene los **notebooks de la Sección 2 (Modelación y Gamifi
 | 3 | [`03_prototipo_videojuego.ipynb`](notebooks/03_prototipo_videojuego.ipynb) | Día 3 (tarde) — Prototipo de la interfaz del videojuego (mapa interactivo) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1SPewLWwFuaRrbnvnoVvlqjuMp_74hAEz) · [Ver en Drive](https://drive.google.com/file/d/1SPewLWwFuaRrbnvnoVvlqjuMp_74hAEz/view?usp=sharing) |
 | 4 | [`04_escenarios_mecanicas.ipynb`](notebooks/04_escenarios_mecanicas.ipynb) | Día 4 (mañana) — Escenarios de desarrollo y mecánicas de juego interactivas | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1cLQ287TF0SnZhFNBOEjwni1LnWYRTzpl) · [Ver en Drive](https://drive.google.com/file/d/1cLQ287TF0SnZhFNBOEjwni1LnWYRTzpl/view?usp=sharing) |
 | 5 | [`05_integracion_datos_satelitales.ipynb`](notebooks/05_integracion_datos_satelitales.ipynb) | Día 4 (tarde) — Integración de datos satelitales reales al videojuego | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1V0Z7SrM4IMzvN2k3NzX_sJJCu1vbQ6V2) · [Ver en Drive](https://drive.google.com/file/d/1V0Z7SrM4IMzvN2k3NzX_sJJCu1vbQ6V2/view?usp=sharing) |
-| ✨ | [`06_actividad_extra_videojuego_html_ia.ipynb`](notebooks/06_actividad_extra_videojuego_html_ia.ipynb) | Actividad extra — Crear un videojuego en **HTML/CSS/JS** dirigiendo prompts a Claude o Gemini | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/TU_USUARIO/satelites-y-sims/blob/main/notebooks/06_actividad_extra_videojuego_html_ia.ipynb) |
+| ✨ | [`06_actividad_extra_videojuego_html_ia.ipynb`](notebooks/06_actividad_extra_videojuego_html_ia.ipynb) | Actividad extra — Crear un videojuego en **HTML/CSS/JS** dirigiendo prompts a Claude o Gemini | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rcavieses/sims_satelite_and_models/blob/main/notebooks/06_actividad_extra_videojuego_html_ia.ipynb) |
 
 Cada notebook genera un archivo de salida (`modelo_mental.json`, `simulacion_ecosistema.py`, `proyecto_final_alpha.json`) que el siguiente notebook reutiliza automáticamente si está en la misma carpeta — así que estudiantes que trabajen en Colab deben subir/descargar esos archivos entre sesión y sesión (o trabajar todos los notebooks en la misma carpeta de Google Drive).
 
@@ -54,7 +54,7 @@ El notebook `06_actividad_extra_videojuego_html_ia.ipynb` es una alternativa (o 
 ├── syllabus/                # Carta descriptiva del curso (docx + versión markdown)
 ├── docs/                    # Sitio de GitHub Pages (landing page del curso)
 └── scripts/
-    └── configurar_repo.sh   # Reemplaza el placeholder TU_USUARIO/satelites-y-sims
+    └── configurar_repo.sh   # Reemplaza el placeholder rcavieses/sims_satelite_and_models
 ```
 
 ## 🚀 Publicar el sitio en GitHub Pages
@@ -72,7 +72,7 @@ El notebook `06_actividad_extra_videojuego_html_ia.ipynb` es una alternativa (o 
 
 ## ⚙️ Configuración inicial (una sola vez)
 
-Antes de compartir el repo o publicar Pages, reemplaza el placeholder `TU_USUARIO/satelites-y-sims` (usado en los badges de Colab y en el link del sitio) por tu usuario y nombre de repo reales:
+Antes de compartir el repo o publicar Pages, reemplaza el placeholder `rcavieses/sims_satelite_and_models` (usado en los badges de Colab y en el link del sitio) por tu usuario y nombre de repo reales:
 
 ```bash
 chmod +x scripts/configurar_repo.sh
