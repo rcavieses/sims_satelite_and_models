@@ -1,0 +1,30 @@
+# Jupyter
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Archivos generados al ejecutar los notebooks (estado de cada equipo)
+modelo_mental.json
+simulacion_ecosistema.py
+proyecto_final_alpha.json
+pygame_prototipo.py
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Datos satelitales pesados (no subir rasters completos al repo)
+*.tif
+*.tiff
+*.npy
+!notebooks/**/ejemplo*.npy
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
