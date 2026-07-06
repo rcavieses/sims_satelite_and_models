@@ -8,6 +8,16 @@ Curso de 5 días (35 horas) donde los estudiantes crean una simulación interact
 **🧠 NotebookLM del curso:** https://notebooklm.google.com/notebook/e98d58f1-92c9-4bb8-ba0f-c38e1b6109aa (resumen en audio y preguntas sobre los materiales)
 **📝 Carta descriptiva editable (Google Docs):** https://docs.google.com/document/d/10XGao9xnrxiKcDbR3FxOb4SU7lYVDQWX/edit?usp=sharing
 
+## 🔊 Recursos adicionales
+
+| Recurso | Link |
+|---|---|
+| 🎥 ¿Qué es Google Colab? | [Ver video](https://www.youtube.com/watch?v=KFcA30K-ndo&t=108s) |
+| 🎥 ¿Qué es Python? | [Ver video](https://www.youtube.com/watch?v=eAFuJhRm2Sg&t=29s) |
+| 🗂️ Datos censales (INEGI) | [Abrir carpeta](https://drive.google.com/drive/folders/1t3U3n2-JDW6DZvt8HqquJCTpLDzobknF?usp=sharing) |
+| 🛰️ Copernicus Browser | [Abrir](https://browser.dataspace.copernicus.eu/) |
+| 🐙 Crear cuenta de GitHub | [Crear cuenta](https://github.com/signup) |
+
 > ⚠️ Este repo usa el placeholder `rcavieses/sims_satelite_and_models`. En cuanto crees el repositorio real en GitHub, corre `scripts/configurar_repo.sh <usuario> <repo>` para reemplazarlo en todos los archivos (ver [Configuración inicial](#-configuración-inicial-una-sola-vez)).
 
 ## 📚 Estructura del curso
