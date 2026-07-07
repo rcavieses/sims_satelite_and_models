@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Distorsión, proyecciones y planeación urbana — Día 2</title>
+<meta name="description" content="Explorador interactivo: distorsión por ángulo de satélite, proyecciones cartográficas, planeación urbana y comparación multitemporal.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e1a;
+  --bg-panel:#121a2c;
+  --bg-panel-alt:#17213a;
+  --line:#263356;
+  --text:#e8ecf4;
+  --text-dim:#8d9ac2;
+  --amber:#ffb13c;
+  --amber-dim:#8a6a34;
+  --cyan:#4fd8c4;
+  --coral:#ff6b6b;
+  --ok:#4ade80;
+  --mono:'IBM Plex Mono', ui-monospace, monospace;
+  --display:'Space Grotesk', ui-sans-serif, sans-serif;
+  --body:'Inter', ui-sans-serif, sans-serif;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 700px at 85% -10%, #12203a 0%, transparent 60%),
+    radial-gradient(900px 600px at -10% 20%, #14243a 0%, transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  line-height:1.55;
+}
+img{max-width:100%;}
+a{color:var(--cyan);}
+.wrap{max-width:1040px; margin:0 auto; padding:0 22px;}
+
+.topbar{
+  position:sticky; top:0; z-index:50;
+  background:rgba(10,14,26,0.86);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.topbar .wrap{display:flex; align-items:center; justify-content:space-between; padding:12px 22px; gap:12px; flex-wrap:wrap;}
+.topbar .marca{font-family:var(--mono); font-size:.82rem; letter-spacing:.06em; color:var(--text-dim);}
+.topbar .marca b{color:var(--amber); font-weight:600;}
+.topbar .links{display:flex; gap:16px;}
+.volver{color:var(--text-dim); text-decoration:none; font-size:.86rem; font-family:var(--mono);}
+.volver:hover{color:var(--cyan);}
+
+.hero{position:relative; border-bottom:1px solid var(--line); padding:54px 0 40px 0; overflow:hidden;}
+.hero::before{
+  content:''; position:absolute; inset:0; z-index:0; opacity:.5;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(79,216,196,0.06) 39px, transparent 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(79,216,196,0.06) 39px, transparent 40px);
+}
+.hero .wrap{position:relative; z-index:1;}
+.eyebrow{
+  font-family:var(--mono); font-size:.78rem; letter-spacing:.12em; color:var(--amber);
+  text-transform:uppercase; display:inline-block; margin-bottom:14px;
+  border:1px solid var(--amber-dim); padding:3px 10px; border-radius:3px; background:rgba(255,177,60,0.08);
+}
+.hero h1{font-family:var(--display); font-size:clamp(1.7rem,4.4vw,2.7rem); line-height:1.1; margin:0 0 14px 0; max-width:760px;}
+.hero p.tagline{max-width:640px; color:var(--text-dim); font-size:1rem; margin:0;}
+
+main{padding:10px 0 80px 0;}
+section.modulo{padding:52px 0; border-bottom:1px solid var(--line);}
+section.modulo:last-of-type{border-bottom:none;}
+.modulo .chan{
+  font-family:var(--mono); font-size:.76rem; letter-spacing:.08em; color:var(--cyan);
+  display:inline-flex; align-items:center; gap:8px; margin-bottom:12px;
+}
+.modulo .chan .dot{width:7px; height:7px; border-radius:50%; background:var(--cyan); box-shadow:0 0 8px var(--cyan);}
+.modulo h2{font-family:var(--display); font-size:clamp(1.3rem,2.6vw,1.9rem); margin:0 0 10px 0;}
+.modulo .intro{color:var(--text-dim); max-width:680px; margin:0 0 24px 0;}
+.panel{
+  background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-alt) 100%);
+  border:1px solid var(--line); border-radius:10px; padding:22px;
+}
+.grid2{display:grid; grid-template-columns:1.1fr 1fr; gap:22px;}
+@media (max-width:760px){.grid2{grid-template-columns:1fr;}}
+
+label.ctl{display:block; font-family:var(--mono); font-size:.78rem; color:var(--text-dim); margin-bottom:6px;}
+input[type=range]{
+  -webkit-appearance:none; width:100%; height:4px; border-radius:2px;
+  background:var(--line); outline:none; margin:6px 0 14px 0;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+  background:var(--amber); border:2px solid #0a0e1a; cursor:pointer; box-shadow:0 0 6px rgba(255,177,60,.6);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px; height:16px; border-radius:50%; background:var(--amber); border:2px solid #0a0e1a; cursor:pointer;
+}
+.readout{font-family:var(--mono); font-size:.9rem; color:var(--amber);}
+.readout .u{color:var(--text-dim); font-size:.78rem;}
+
+.btnrow{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+.chip{
+  font-family:var(--mono); font-size:.78rem; padding:7px 12px; border-radius:20px;
+  border:1px solid var(--line); background:transparent; color:var(--text-dim); cursor:pointer;
+  transition:all .15s ease;
+}
+.chip:hover{border-color:var(--cyan); color:var(--text);}
+.chip.activo{background:var(--cyan); border-color:var(--cyan); color:#08201c; font-weight:600;}
+
+canvas.viz{width:100%; display:block; border-radius:6px; background:#060a13; border:1px solid var(--line);}
+.swatchrow{display:flex; gap:14px; align-items:center; margin-top:14px; flex-wrap:wrap;}
+.nota{font-size:.86rem; color:var(--text-dim); margin-top:14px; padding-top:14px; border-top:1px dashed var(--line);}
+.nota b{color:var(--text);}
+
+table.datos{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:.8rem; margin-top:6px;}
+table.datos th, table.datos td{border-bottom:1px solid var(--line); padding:6px 8px; text-align:left;}
+table.datos th{color:var(--text-dim); font-weight:500;}
+
+.stat-grande{
+  font-family:var(--mono); font-size:1.4rem; color:var(--amber); margin:4px 0 2px 0;
+}
+.stat-lbl{font-family:var(--mono); font-size:.72rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em;}
+
+/* comparador antes/despues */
+.compare-stage{position:relative; border-radius:6px; overflow:hidden; border:1px solid var(--line); user-select:none;}
+.compare-stage canvas{display:block; width:100%;}
+.compare-clip{position:absolute; top:0; left:0; height:100%; overflow:hidden; border-right:2px solid var(--amber);}
+.compare-clip canvas{position:absolute; top:0; left:0; height:100%;}
+.compare-tag{
+  position:absolute; top:10px; font-family:var(--mono); font-size:.72rem; letter-spacing:.06em;
+  background:rgba(6,9,17,0.7); border:1px solid var(--line); padding:3px 9px; border-radius:3px; color:var(--text-dim);
+  pointer-events:none;
+}
+.compare-tag.izq{left:10px;}
+.compare-tag.der{right:10px;}
+
+/* recursos externos */
+.recurso-card{
+  display:flex; justify-content:space-between; align-items:flex-start; gap:14px;
+  border:1px solid var(--line); border-radius:9px; padding:14px 16px; margin-bottom:10px; background:var(--bg-panel);
+}
+.recurso-card h4{margin:0 0 4px 0; font-family:var(--display); font-size:1rem;}
+.recurso-card p{margin:0; color:var(--text-dim); font-size:.86rem;}
+.recurso-card a.boton{
+  flex-shrink:0; font-family:var(--mono); font-size:.76rem; color:var(--cyan); text-decoration:none;
+  border:1px solid var(--cyan); padding:6px 12px; border-radius:20px; white-space:nowrap;
+}
+.recurso-card a.boton:hover{background:var(--cyan); color:#08201c;}
+.recurso-card.placeholder{border-style:dashed; border-color:var(--amber-dim); background:rgba(255,177,60,0.05);}
+.recurso-card.placeholder h4{color:var(--amber);}
+
+/* quiz (idéntico al día 1) */
+.quiz-item{border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:16px; background:var(--bg-panel);}
+.quiz-item h3{font-family:var(--display); font-size:1.02rem; margin:0 0 14px 0; font-weight:600;}
+.opciones{display:grid; gap:8px;}
+.opcion{
+  text-align:left; font-family:var(--body); font-size:.92rem; color:var(--text);
+  background:var(--bg-panel-alt); border:1px solid var(--line); border-radius:7px; padding:10px 14px;
+  cursor:pointer; transition:all .12s ease;
+}
+.opcion:hover{border-color:var(--cyan);}
+.opcion.correcta{border-color:var(--ok); background:rgba(74,222,128,0.12); color:var(--ok);}
+.opcion.incorrecta{border-color:var(--coral); background:rgba(255,107,107,0.12); color:var(--coral);}
+.opcion:disabled{cursor:default;}
+.feedback{font-family:var(--mono); font-size:.8rem; margin-top:10px; min-height:1.2em;}
+.feedback.ok{color:var(--ok);}
+.feedback.bad{color:var(--coral);}
+.marcador{
+  position:sticky; top:57px; z-index:40; display:flex; justify-content:space-between; align-items:center;
+  background:var(--bg-panel); border:1px solid var(--line); border-radius:8px; padding:10px 16px; margin-bottom:20px;
+  font-family:var(--mono); font-size:.84rem; flex-wrap:wrap; gap:8px;
+}
+.marcador b{color:var(--amber);}
+.reiniciar{
+  font-family:var(--mono); font-size:.78rem; color:var(--text-dim); background:transparent;
+  border:1px solid var(--line); border-radius:6px; padding:6px 12px; cursor:pointer;
+}
+.reiniciar:hover{border-color:var(--amber); color:var(--amber);}
+
+footer{border-top:1px solid var(--line); padding:26px 0; color:var(--text-dim); font-size:.85rem; font-family:var(--mono);}
+footer a{color:var(--text-dim); text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="marca">CH · <b>Día 2</b> — Distorsión, proyecciones y planeación urbana</div>
+    <div class="links">
+      <a class="volver" href="percepcion-remota.html">↩ Día 1: percepción remota</a>
+      <a class="volver" href="index.html">← Volver al inicio</a>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Explorador interactivo · Día 2</div>
+    <h1>La misma ciudad, vista desde ángulos, mapas y años distintos</h1>
+    <p class="tagline">Hoy la imagen satelital deja de ser solo "datos limpios": vemos cómo el ángulo del satélite y la proyección del mapa deforman lo que medimos, y cómo leer esas imágenes para entender decisiones reales de planeación urbana.</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ 8. DISTORSIÓN POR ÁNGULO ============ -->
+  <section class="modulo wrap" id="angulo">
+    <div class="chan"><span class="dot"></span>CH-08 · DISTORSIÓN POR ÁNGULO DE OBSERVACIÓN</div>
+    <h2>Un satélite casi nunca ve exactamente hacia abajo</h2>
+    <p class="intro">Cuando un sensor observa un punto que no está justo debajo de él (fuera del <b>nadir</b>), los objetos altos —edificios, torres, árboles— parecen "recostarse" hacia el borde de la imagen. Entre más alto el objeto y mayor el ángulo, mayor el corrimiento aparente.</p>
+    <div class="panel grid2">
+      <div>
+        <canvas class="viz" id="canvas-angulo" width="480" height="300"></canvas>
+      </div>
+      <div>
+        <label class="ctl">Ángulo de observación (off-nadir)</label>
+        <input type="range" id="rango-angulo" min="0" max="45" value="0" step="1">
+        <div class="readout"><span id="valor-angulo">0</span><span class="u">°</span></div>
+        <div class="stat-lbl">Desplazamiento aparente de la torre más alta (100 m)</div>
+        <div class="stat-grande"><span id="desplazamiento-max">0.0</span> <span style="font-size:.9rem;color:var(--text-dim);">m</span></div>
+        <table class="datos" id="tabla-angulo"></table>
+        <div class="nota">Fórmula: desplazamiento ≈ altura × tan(ángulo). Por eso los satélites que dan prioridad a mediciones precisas (como agricultura o hidrología) prefieren imágenes cercanas al nadir, mientras que ángulos grandes se usan para revisitar un lugar con más frecuencia o generar pares estereoscópicos para modelos 3D.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 9. PROYECCIONES ============ -->
+  <section class="modulo wrap" id="proyecciones">
+    <div class="chan"><span class="dot"></span>CH-09 · DE LA ESFERA AL PLANO: PROYECCIONES CARTOGRÁFICAS</div>
+    <h2>No existe un mapa plano sin trampa</h2>
+    <p class="intro">La Tierra es (casi) una esfera; un mapa es plano. Pasar de una a otro siempre sacrifica algo: área, forma, distancia o dirección. Los círculos de abajo miden <b>lo mismo</b> en la superficie real — observa cómo cada proyección los deforma distinto según dónde estén.</p>
+    <div class="panel">
+      <div class="btnrow" id="botones-proyeccion"></div>
+      <canvas class="viz" id="canvas-proyeccion" width="900" height="480"></canvas>
+      <div class="nota" id="descripcion-proyeccion">Selecciona una proyección arriba.</div>
+    </div>
+    <div class="nota" style="margin-top:18px;">Ejemplo real: en la proyección Mercator, Groenlandia se ve casi tan grande como África — pero África mide en realidad <b>~14 veces más</b> que Groenlandia. Puedes comprobarlo tú mismo arrastrando países en <a href="https://www.thetruesize.com/" target="_blank" rel="noopener">thetruesize.com</a>.</div>
+  </section>
+
+  <!-- ============ 10. PLANEACIÓN URBANA ============ -->
+  <section class="modulo wrap" id="planeacion">
+    <div class="chan"><span class="dot"></span>CH-10 · PLANEACIÓN URBANA: LO QUE UNA IMAGEN REVELA</div>
+    <h2>El patrón del suelo cuenta la historia de cómo creció una ciudad</h2>
+    <p class="intro">Antes de escribir una sola línea de código para tu proyecto, es útil entrenar el ojo: la forma, densidad y regularidad de lo construido dice mucho sobre cómo (y con qué planeación) se desarrolló una zona. Selecciona cada tipo de zona para ver qué lo delata en una imagen satelital.</p>
+    <div class="panel">
+      <div class="btnrow" id="botones-zona"></div>
+      <canvas class="viz" id="canvas-zona" width="480" height="300"></canvas>
+      <div class="nota" id="descripcion-zona">Selecciona una zona arriba.</div>
+    </div>
+    <div class="nota" style="margin-top:18px;">Estas mismas ideas alimentan estudios reales de <b>isla de calor urbana</b> (zonas con más concreto y menos vegetación se calientan más, algo medible con bandas térmicas infrarrojas) y decisiones de planeación como dónde reforestar, dónde ampliar transporte público o dónde regularizar asentamientos.</div>
+  </section>
+
+  <!-- ============ 11. COMPARACIÓN MULTITEMPORAL ============ -->
+  <section class="modulo wrap" id="multitemporal">
+    <div class="chan"><span class="dot"></span>CH-11 · ANÁLISIS MULTITEMPORAL</div>
+    <h2>La misma zona, treinta años después</h2>
+    <p class="intro">Una sola imagen satelital es una fotografía; una <b>serie de imágenes en el tiempo</b> es una historia. Arrastra la línea para comparar el mismo terreno antes y después de un proceso de urbanización.</p>
+    <div class="panel">
+      <div class="compare-stage" id="escenario-comparar">
+        <canvas id="canvas-despues" width="480" height="300"></canvas>
+        <div class="compare-clip" id="clip-antes">
+          <canvas id="canvas-antes" width="480" height="300"></canvas>
+        </div>
+        <div class="compare-tag izq">≈1995</div>
+        <div class="compare-tag der">≈2025</div>
+      </div>
+      <label class="ctl" style="margin-top:14px;">Arrastra para comparar en el tiempo</label>
+      <input type="range" id="rango-comparar" min="0" max="100" value="50" step="1">
+      <div class="nota">Este es exactamente el ejercicio que harás el día de mañana en la <b>Sección 1</b> con imágenes reales de tu ciudad: comparar Sentinel-2/Landsat de distintos años para detectar cambios en vegetación, urbanización y cuerpos de agua — la base de tu mapa comparativo multitemporal.</div>
+    </div>
+  </section>
+
+  <!-- ============ RECURSOS EXTERNOS ============ -->
+  <section class="modulo wrap" id="recursos">
+    <div class="chan"><span class="dot"></span>RECURSOS PARA SEGUIR EXPLORANDO</div>
+    <h2>Herramientas y lecturas externas</h2>
+    <p class="intro">Sitios didácticos (en su mayoría en inglés) para profundizar en cada tema por tu cuenta.</p>
+
+    <div class="recurso-card">
+      <div><h4>The True Size Of…</h4><p>Arrastra países por el mapa y compara su tamaño real — ideal para ver la distorsión de Mercator en acción.</p></div>
+      <a class="boton" href="https://www.thetruesize.com/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+    <div class="recurso-card">
+      <div><h4>Map Projection Transitions (Jason Davies)</h4><p>Animación que transforma un mapamundi entre más de 50 proyecciones distintas, en tiempo real.</p></div>
+      <a class="boton" href="https://www.jasondavies.com/maps/transition/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+    <div class="recurso-card">
+      <div><h4>Projection Wizard</h4><p>Herramienta que sugiere la proyección más adecuada según el área que quieras mapear y qué propiedad te importa preservar.</p></div>
+      <a class="boton" href="https://projectionwizard.org/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+    <div class="recurso-card">
+      <div><h4>NASA · Images of Change</h4><p>Galería de pares de imágenes satelitales "antes / después" de NASA, con control deslizante para comparar años.</p></div>
+      <a class="boton" href="https://science.nasa.gov/earth/multimedia/interactives/images-of-change/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+    <div class="recurso-card">
+      <div><h4>Google Earth Engine Timelapse</h4><p>Video interactivo y navegable del planeta completo, año por año, de 1984 a la actualidad.</p></div>
+      <a class="boton" href="https://earthengine.google.com/timelapse/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+    <div class="recurso-card">
+      <div><h4>European Space Imaging: Off-Nadir Angle</h4><p>Explicación técnica (en inglés) de cómo el ángulo de observación afecta la geometría y nitidez de una imagen satelital.</p></div>
+      <a class="boton" href="https://www.euspaceimaging.com/blog/2024/01/31/what-is-ona-off-nadir-angle-in-satellite-imagery/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+
+    <div class="recurso-card">
+      <div><h4>Dashboard: vulnerabilidad al cambio climático (CEDO)</h4><p>Panel interactivo de consultoría sobre vulnerabilidad de comunidades/pesquerías del Golfo de California ante el cambio climático — un ejemplo real de cómo estos análisis terminan en una herramienta que alguien más puede explorar.</p></div>
+      <a class="boton" href="https://cedo.shinyapps.io/vulnerability_cc_dash/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+    <div class="recurso-card">
+      <div><h4>Dashboard adicional (CEDO)</h4><p>Segundo panel de datos desarrollado para consultoría en CEDO Intercultural.</p></div>
+      <a class="boton" href="https://cedo.shinyapps.io/shiny_dashboard/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="modulo wrap" id="repaso">
+    <div class="chan"><span class="dot"></span>REPASO</div>
+    <h2>Ponte a prueba</h2>
+    <p class="intro">Preguntas rápidas sobre distorsión, proyecciones y planeación urbana.</p>
+    <div class="marcador">
+      <span>Puntaje: <b id="puntaje">0</b> / <span id="total-preguntas">7</span></span>
+      <button class="reiniciar" id="btn-reiniciar">Reiniciar quiz</button>
+    </div>
+    <div id="lista-quiz"></div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Página de apoyo del curso <strong>Satélites y Sims</strong> · <a href="index.html">← Volver al inicio</a> · <a href="percepcion-remota.html">Día 1: percepción remota</a> · <a href="syllabus.html">Ver carta descriptiva</a>
+  </div>
+</footer>
+
+<script>
+/* =======================================================================
+   8. DISTORSIÓN POR ÁNGULO (OFF-NADIR)
+   ======================================================================= */
+const edificios = [
+  {h:20,  dist:60},
+  {h:40,  dist:110},
+  {h:60,  dist:160},
+  {h:80,  dist:210},
+  {h:100, dist:260},
+];
+const cvAngulo = document.getElementById('canvas-angulo');
+const ctxAngulo = cvAngulo.getContext('2d');
+const rangoAngulo = document.getElementById('rango-angulo');
+const valorAngulo = document.getElementById('valor-angulo');
+const desplazamientoMax = document.getElementById('desplazamiento-max');
+const tablaAngulo = document.getElementById('tabla-angulo');
+
+function dibujarAngulo(anguloDeg){
+  const w = cvAngulo.width, h = cvAngulo.height;
+  const nadirX = w*0.28, baseY = h*0.72;
+  const anguloRad = anguloDeg*Math.PI/180;
+  const escalaPx = 1.15; // px por metro (horizontal)
+
+  ctxAngulo.clearRect(0,0,w,h);
+  // suelo
+  ctxAngulo.fillStyle = '#0d1626';
+  ctxAngulo.fillRect(0, baseY, w, h-baseY);
+  ctxAngulo.strokeStyle = '#263356';
+  ctxAngulo.beginPath(); ctxAngulo.moveTo(0,baseY); ctxAngulo.lineTo(w,baseY); ctxAngulo.stroke();
+
+  // linea de nadir
+  ctxAngulo.strokeStyle = 'rgba(79,216,196,0.4)';
+  ctxAngulo.setLineDash([4,4]);
+  ctxAngulo.beginPath(); ctxAngulo.moveTo(nadirX, 20); ctxAngulo.lineTo(nadirX, baseY); ctxAngulo.stroke();
+  ctxAngulo.setLineDash([]);
+  ctxAngulo.fillStyle = '#4fd8c4';
+  ctxAngulo.font = '10px IBM Plex Mono, monospace';
+  ctxAngulo.fillText('nadir', nadirX-14, 16);
+
+  // satelite (arriba, inclinado según ángulo)
+  const satX = nadirX + Math.tan(anguloRad)*180;
+  const satY = 30;
+  ctxAngulo.save();
+  ctxAngulo.translate(satX, satY);
+  ctxAngulo.rotate(anguloRad*0.6);
+  ctxAngulo.fillStyle = '#e8ecf4';
+  ctxAngulo.fillRect(-12,-6,24,12);
+  ctxAngulo.fillStyle = '#4fd8c4';
+  ctxAngulo.fillRect(-20,-3,7,6);
+  ctxAngulo.fillRect(13,-3,7,6);
+  ctxAngulo.restore();
+  // linea de vision hacia el edificio mas lejano
+  const objetivoX = nadirX + edificios[edificios.length-1].dist*escalaPx*0.5;
+  ctxAngulo.strokeStyle = 'rgba(255,177,60,0.5)';
+  ctxAngulo.beginPath(); ctxAngulo.moveTo(satX,satY); ctxAngulo.lineTo(objetivoX, baseY); ctxAngulo.stroke();
+
+  let filas = [];
+  let dMax = 0;
+  edificios.forEach(b=>{
+    const bx = nadirX + b.dist*0.5;
+    const desplazamientoM = b.h * Math.tan(anguloRad);
+    const desplazamientoPx = desplazamientoM*escalaPx;
+    dMax = Math.max(dMax, desplazamientoM);
+
+    // huella real (footprint) - punteado
+    ctxAngulo.strokeStyle = '#66738f';
+    ctxAngulo.setLineDash([3,3]);
+    ctxAngulo.strokeRect(bx-7, baseY-14, 14, 14);
+    ctxAngulo.setLineDash([]);
+
+    // altura del edificio, dibujada como columna que se recuesta
+    const alturaPx = b.h*0.9;
+    const topX = bx + desplazamientoPx;
+    const topY = baseY-14-alturaPx;
+    const grad = ctxAngulo.createLinearGradient(bx,baseY-14,topX,topY);
+    grad.addColorStop(0,'#3a4a72'); grad.addColorStop(1,'#5c7bb8');
+    ctxAngulo.strokeStyle = grad;
+    ctxAngulo.lineWidth = 10;
+    ctxAngulo.beginPath();
+    ctxAngulo.moveTo(bx, baseY-14);
+    ctxAngulo.lineTo(topX, topY);
+    ctxAngulo.stroke();
+    ctxAngulo.lineWidth = 1;
+
+    // techo visible (lo que realmente capta el sensor) resaltado
+    ctxAngulo.fillStyle = '#ffb13c';
+    ctxAngulo.fillRect(topX-7, topY-6, 14, 6);
+
+    ctxAngulo.fillStyle = '#8d9ac2';
+    ctxAngulo.font = '9px IBM Plex Mono, monospace';
+    ctxAngulo.textAlign = 'center';
+    ctxAngulo.fillText(b.h+'m', bx, baseY+14);
+    ctxAngulo.textAlign = 'left';
+
+    filas.push(`<tr><td>${b.h} m</td><td>${desplazamientoM.toFixed(1)} m</td></tr>`);
+  });
+
+  desplazamientoMax.textContent = dMax.toFixed(1);
+  tablaAngulo.innerHTML = `<tr><th>Altura del edificio</th><th>Desplazamiento aparente</th></tr>` + filas.join('');
+}
+
+function actualizarAngulo(){
+  const a = parseFloat(rangoAngulo.value);
+  valorAngulo.textContent = a;
+  dibujarAngulo(a);
+}
+rangoAngulo.addEventListener('input', actualizarAngulo);
+actualizarAngulo();
+
+/* =======================================================================
+   9. PROYECCIONES CARTOGRÁFICAS
+   ======================================================================= */
+const cvProy = document.getElementById('canvas-proyeccion');
+const ctxProy = cvProy.getContext('2d');
+
+function toRad(d){return d*Math.PI/180;}
+function toDeg(r){return r*180/Math.PI;}
+
+function proyectar(lat, lon, tipo, lon0=0, lat0=0){
+  const latR = toRad(lat), lonR = toRad(lon - lon0);
+  switch(tipo){
+    case 'equirectangular':
+      return {x: lonR, y: latR, visible:true};
+    case 'mercator': {
+      const latClamp = Math.max(-85, Math.min(85, lat));
+      const y = Math.log(Math.tan(Math.PI/4 + toRad(latClamp)/2));
+      return {x: lonR, y: y, visible:true};
+    }
+    case 'sinusoidal':
+      return {x: lonR*Math.cos(latR), y: latR, visible:true};
+    case 'mollweide': {
+      let theta = latR;
+      if (Math.abs(Math.abs(lat)-90) > 1e-6){
+        for(let i=0;i<12;i++){
+          const delta = (2*theta + Math.sin(2*theta) - Math.PI*Math.sin(latR)) / (2+2*Math.cos(2*theta));
+          theta -= delta;
+        }
+      }
+      const x = (2*Math.SQRT2/Math.PI) * lonR * Math.cos(theta);
+      const y = Math.SQRT2*Math.sin(theta);
+      return {x,y, visible:true};
+    }
+    case 'ortografica': {
+      const lat0R = toRad(lat0);
+      const cosc = Math.sin(lat0R)*Math.sin(latR) + Math.cos(lat0R)*Math.cos(latR)*Math.cos(lonR);
+      const x = Math.cos(latR)*Math.sin(lonR);
+      const y = Math.cos(lat0R)*Math.sin(latR) - Math.sin(lat0R)*Math.cos(latR)*Math.cos(lonR);
+      return {x,y, visible: cosc >= 0};
+    }
+  }
+}
+
+function circulosTissot(lat0,lon0,rDeg,n){
+  const r = toRad(rDeg), lat0r = toRad(lat0), lon0r = toRad(lon0);
+  const pts=[];
+  for(let i=0;i<=n;i++){
+    const bearing = (i/n)*2*Math.PI;
+    const lat = Math.asin(Math.sin(lat0r)*Math.cos(r) + Math.cos(lat0r)*Math.sin(r)*Math.cos(bearing));
+    const lon = lon0r + Math.atan2(Math.sin(bearing)*Math.sin(r)*Math.cos(lat0r), Math.cos(r)-Math.sin(lat0r)*Math.sin(lat));
+    pts.push([toDeg(lat), toDeg(lon)]);
+  }
+  return pts;
+}
+
+const centrosTissot = [];
+[-60,-30,0,30,60].forEach(lat=>{
+  [-120,-60,0,60,120].forEach(lon=>{
+    centrosTissot.push([lat,lon]);
+  });
+});
+
+function construirGraticula(){
+  const meridianos = [];
+  for(let lon=-180; lon<=180; lon+=15){
+    const linea = [];
+    for(let lat=-80; lat<=80; lat+=4) linea.push([lat,lon]);
+    meridianos.push(linea);
+  }
+  const paralelos = [];
+  for(let lat=-75; lat<=75; lat+=15){
+    const linea = [];
+    for(let lon=-180; lon<=180; lon+=4) linea.push([lat,lon]);
+    paralelos.push(linea);
+  }
+  return {meridianos, paralelos};
+}
+const graticula = construirGraticula();
+
+function dibujarProyeccion(tipo){
+  const w = cvProy.width, h = cvProy.height;
+  ctxProy.clearRect(0,0,w,h);
+
+  // recolectar todos los puntos proyectados para autoajustar la escala
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  function registrar(p){
+    if(!p.visible) return;
+    minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x);
+    minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y);
+  }
+  const meridianosProy = graticula.meridianos.map(linea => linea.map(([lat,lon])=>{
+    const p = proyectar(lat,lon,tipo); registrar(p); return p;
+  }));
+  const paralelosProy = graticula.paralelos.map(linea => linea.map(([lat,lon])=>{
+    const p = proyectar(lat,lon,tipo); registrar(p); return p;
+  }));
+  const circulosProy = centrosTissot.map(([lat0,lon0])=>{
+    return circulosTissot(lat0,lon0,8,28).map(([lat,lon])=>{
+      const p = proyectar(lat,lon,tipo); registrar(p); return p;
+    });
+  });
+
+  const anchoMundo = maxX-minX, altoMundo = maxY-minY;
+  const escala = Math.min((w*0.86)/anchoMundo, (h*0.86)/altoMundo);
+  const offX = w/2 - (minX+maxX)/2*escala;
+  const offY = h/2 + (minY+maxY)/2*escala; // y invertido
+
+  function alCanvas(p){ return [p.x*escala+offX, -p.y*escala+offY]; }
+
+  function trazarLinea(puntosProy, color){
+    ctxProy.strokeStyle = color;
+    ctxProy.lineWidth = 1;
+    ctxProy.beginPath();
+    let enTrazo = false;
+    puntosProy.forEach(p=>{
+      if(!p.visible){ enTrazo=false; return; }
+      const [x,y] = alCanvas(p);
+      if(!enTrazo){ ctxProy.moveTo(x,y); enTrazo=true; } else { ctxProy.lineTo(x,y); }
+    });
+    ctxProy.stroke();
+  }
+
+  meridianosProy.forEach(l=>trazarLinea(l, 'rgba(79,216,196,0.28)'));
+  paralelosProy.forEach(l=>trazarLinea(l, 'rgba(79,216,196,0.28)'));
+
+  // ecuador y meridiano central resaltados
+  const idxEcuador = graticula.paralelos.findIndex(l=>l[0][0]===0);
+  if(idxEcuador>=0) trazarLinea(paralelosProy[idxEcuador], 'rgba(255,177,60,0.55)');
+  const idxCentral = graticula.meridianos.findIndex(l=>l[0][1]===0);
+  if(idxCentral>=0) trazarLinea(meridianosProy[idxCentral], 'rgba(255,177,60,0.55)');
+
+  // circulos de Tissot
+  circulosProy.forEach(puntos=>{
+    const visibles = puntos.filter(p=>p.visible);
+    if(visibles.length < puntos.length*0.6) return; // se corto por el horizonte (ortografica)
+    ctxProy.beginPath();
+    puntos.forEach((p,i)=>{
+      if(!p.visible) return;
+      const [x,y] = alCanvas(p);
+      if(i===0 || !puntos[i-1].visible) ctxProy.moveTo(x,y); else ctxProy.lineTo(x,y);
+    });
+    ctxProy.closePath();
+    ctxProy.fillStyle = 'rgba(255,107,107,0.22)';
+    ctxProy.strokeStyle = 'rgba(255,107,107,0.8)';
+    ctxProy.fill();
+    ctxProy.stroke();
+  });
+}
+
+const proyecciones = [
+  {id:'equirectangular', nombre:'Equirectangular', desc:'Cuadrícula lat/lon directa, sin cálculo. Es la más simple de generar por eso muchos datos satelitales crudos (como teselas de MODIS) se distribuyen así, aunque distorsiona área y forma en todas partes salvo el ecuador.'},
+  {id:'mercator', nombre:'Mercator', desc:'Preserva ángulos (por eso es excelente para navegación), pero exagera enormemente el área cerca de los polos — el motivo de que Groenlandia se vea gigante.'},
+  {id:'sinusoidal', nombre:'Senoidal', desc:'Preserva área en toda la superficie (los círculos de Tissot mantienen su tamaño relativo, solo cambian de forma). Se usa en varios productos satelitales de la NASA/MODIS.'},
+  {id:'mollweide', nombre:'Mollweide', desc:'También de área igual, pero con una silueta elíptica más agradable para mapas temáticos globales (por ejemplo, mapas mundiales de población o vegetación).'},
+  {id:'ortografica', nombre:'Ortográfica (vista de globo)', desc:'Simula ver la Tierra como una esfera desde el espacio — igual que "ve" un satélite en un instante. Solo muestra un hemisferio y distorsiona fuertemente cerca del borde visible.'},
+];
+let proyeccionActiva = 'equirectangular';
+const contBotonesProy = document.getElementById('botones-proyeccion');
+proyecciones.forEach(p=>{
+  const btn = document.createElement('button');
+  btn.className = 'chip'+(p.id===proyeccionActiva?' activo':'');
+  btn.textContent = p.nombre;
+  btn.addEventListener('click', ()=>{
+    proyeccionActiva = p.id;
+    document.querySelectorAll('#botones-proyeccion .chip').forEach(c=>c.classList.remove('activo'));
+    btn.classList.add('activo');
+    document.getElementById('descripcion-proyeccion').innerHTML = `<b>${p.nombre}.</b> ${p.desc}`;
+    dibujarProyeccion(proyeccionActiva);
+  });
+  contBotonesProy.appendChild(btn);
+});
+document.getElementById('descripcion-proyeccion').innerHTML = `<b>${proyecciones[0].nombre}.</b> ${proyecciones[0].desc}`;
+dibujarProyeccion(proyeccionActiva);
+
+/* =======================================================================
+   10. PLANEACIÓN URBANA — TIPOS DE ZONA
+   ======================================================================= */
+const cvZona = document.getElementById('canvas-zona');
+const ctxZona = cvZona.getContext('2d');
+
+function dibujarZonas(resaltada){
+  const w = cvZona.width, h = cvZona.height;
+  ctxZona.clearRect(0,0,w,h);
+  ctxZona.fillStyle = '#1a2416';
+  ctxZona.fillRect(0,0,w,h);
+
+  // 1. colonia planificada (cuadricula regular) - arriba izquierda
+  ctxZona.save();
+  ctxZona.beginPath(); ctxZona.rect(0,0,w*0.5,h*0.5); ctxZona.clip();
+  ctxZona.fillStyle = '#7d7666';
+  ctxZona.fillRect(0,0,w*0.5,h*0.5);
+  ctxZona.fillStyle = '#a3543a';
+  for(let x=6; x<w*0.5; x+=26){
+    for(let y=6; y<h*0.5; y+=22){
+      ctxZona.fillRect(x,y,18,14);
+    }
+  }
+  ctxZona.restore();
+
+  // 2. asentamiento informal (denso, irregular) - arriba derecha
+  ctxZona.save();
+  ctxZona.beginPath(); ctxZona.rect(w*0.5,0,w*0.5,h*0.5); ctxZona.clip();
+  ctxZona.fillStyle = '#6b6350';
+  ctxZona.fillRect(w*0.5,0,w*0.5,h*0.5);
+  const coloresTecho = ['#8a5a3c','#b5522f','#9a8a5a','#7d6a4a'];
+  for(let i=0;i<90;i++){
+    const x = w*0.5 + Math.random()*w*0.48;
+    const y = Math.random()*h*0.48;
+    const s = 6+Math.random()*7;
+    ctxZona.fillStyle = coloresTecho[i%coloresTecho.length];
+    ctxZona.save();
+    ctxZona.translate(x,y);
+    ctxZona.rotate((Math.random()-0.5)*0.6);
+    ctxZona.fillRect(-s/2,-s/2,s,s);
+    ctxZona.restore();
+  }
+  ctxZona.restore();
+
+  // 3. zona industrial (techos grandes, planos) - abajo izquierda
+  ctxZona.save();
+  ctxZona.beginPath(); ctxZona.rect(0,h*0.5,w*0.5,h*0.5); ctxZona.clip();
+  ctxZona.fillStyle = '#8f8f8f';
+  ctxZona.fillRect(0,h*0.5,w*0.5,h*0.5);
+  ctxZona.fillStyle = '#b9b9c2';
+  ctxZona.fillRect(w*0.06,h*0.56,w*0.16,h*0.14);
+  ctxZona.fillRect(w*0.26,h*0.56,w*0.16,h*0.22);
+  ctxZona.fillRect(w*0.06,h*0.76,w*0.36,h*0.12);
+  ctxZona.fillStyle = '#6f6f6f';
+  ctxZona.fillRect(w*0.0,h*0.9,w*0.5,h*0.1);
+  ctxZona.restore();
+
+  // 4. parque / area verde - abajo derecha
+  ctxZona.save();
+  ctxZona.beginPath(); ctxZona.rect(w*0.5,h*0.5,w*0.5,h*0.5); ctxZona.clip();
+  ctxZona.fillStyle = '#2e5e2f';
+  ctxZona.fillRect(w*0.5,h*0.5,w*0.5,h*0.5);
+  ctxZona.fillStyle = '#3f7a3f';
+  for(let i=0;i<70;i++){
+    const x = w*0.5 + Math.random()*w*0.48;
+    const y = h*0.5 + Math.random()*h*0.48;
+    ctxZona.beginPath(); ctxZona.arc(x,y,3,0,Math.PI*2); ctxZona.fill();
+  }
+  ctxZona.fillStyle = '#4a90a4';
+  ctxZona.beginPath(); ctxZona.ellipse(w*0.78,h*0.8,26,12,0,0,Math.PI*2); ctxZona.fill();
+  ctxZona.restore();
+
+  // divisores
+  ctxZona.strokeStyle = '#0a0e1a';
+  ctxZona.lineWidth = 3;
+  ctxZona.beginPath(); ctxZona.moveTo(w/2,0); ctxZona.lineTo(w/2,h); ctxZona.moveTo(0,h/2); ctxZona.lineTo(w,h/2); ctxZona.stroke();
+  ctxZona.lineWidth = 1;
+
+  // resaltar zona seleccionada
+  const rects = {
+    planificada: [0,0,w*0.5,h*0.5],
+    informal: [w*0.5,0,w*0.5,h*0.5],
+    industrial: [0,h*0.5,w*0.5,h*0.5],
+    parque: [w*0.5,h*0.5,w*0.5,h*0.5],
+  };
+  if (resaltada && rects[resaltada]){
+    const [x,y,rw,rh] = rects[resaltada];
+    ctxZona.strokeStyle = '#ffb13c';
+    ctxZona.lineWidth = 4;
+    ctxZona.strokeRect(x+2,y+2,rw-4,rh-4);
+    ctxZona.lineWidth = 1;
+  }
+}
+
+const zonas = [
+  {id:'planificada', nombre:'Colonia planificada', desc:'Manzanas y calles con ángulos rectos, lotes de tamaño parecido y patrones repetitivos: señal de que hubo trazo urbano previo (fraccionamiento) antes de construir.'},
+  {id:'informal', nombre:'Asentamiento informal', desc:'Techos de tamaños y orientaciones muy variadas, callejones irregulares y densidad alta sin un trazo aparente: típico de crecimiento no planificado, a menudo con retos de acceso a servicios.'},
+  {id:'industrial', nombre:'Zona industrial', desc:'Techos muy grandes y planos (bodegas, naves), poca vegetación y grandes superficies de concreto o asfalto para estacionamiento y maniobra de carga.'},
+  {id:'parque', nombre:'Parque urbano', desc:'Textura irregular verde (copas de árboles), a veces un cuerpo de agua artificial; en NDVI aparecería con valores altos, muy distinto a las zonas construidas.'},
+];
+let zonaActiva = null;
+const contBotonesZona = document.getElementById('botones-zona');
+zonas.forEach(z=>{
+  const btn = document.createElement('button');
+  btn.className = 'chip';
+  btn.textContent = z.nombre;
+  btn.addEventListener('click', ()=>{
+    zonaActiva = z.id;
+    document.querySelectorAll('#botones-zona .chip').forEach(c=>c.classList.remove('activo'));
+    btn.classList.add('activo');
+    document.getElementById('descripcion-zona').innerHTML = `<b>${z.nombre}.</b> ${z.desc}`;
+    dibujarZonas(zonaActiva);
+  });
+  contBotonesZona.appendChild(btn);
+});
+dibujarZonas(null);
+
+/* =======================================================================
+   11. COMPARACIÓN MULTITEMPORAL (ANTES / DESPUÉS)
+   ======================================================================= */
+const cvAntes = document.getElementById('canvas-antes');
+const cvDespues = document.getElementById('canvas-despues');
+const ctxAntes = cvAntes.getContext('2d');
+const ctxDespues = cvDespues.getContext('2d');
+
+function dibujarEscenaAntes(ctx,w,h){
+  ctx.fillStyle = '#4f7a3d';
+  ctx.fillRect(0,0,w,h);
+  // parcelas agricolas
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  for(let x=0;x<w;x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y=0;y<h;y+=36){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  // rio
+  ctx.fillStyle = '#2e6fa8';
+  ctx.beginPath();
+  ctx.moveTo(0,h*0.2); ctx.quadraticCurveTo(w*0.4,h*0.35,w,h*0.15);
+  ctx.lineTo(w,h*0.24); ctx.quadraticCurveTo(w*0.4,h*0.44,0,h*0.29);
+  ctx.closePath(); ctx.fill();
+  // camino de terraceria
+  ctx.strokeStyle = '#a08a63';
+  ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(0,h*0.75); ctx.lineTo(w,h*0.7); ctx.stroke();
+  ctx.lineWidth = 1;
+  // un par de casas dispersas
+  ctx.fillStyle = '#8a6a4a';
+  ctx.fillRect(w*0.2,h*0.55,10,10);
+  ctx.fillRect(w*0.65,h*0.62,10,10);
+}
+
+function dibujarEscenaDespues(ctx,w,h){
+  ctx.fillStyle = '#7d7666';
+  ctx.fillRect(0,0,w,h);
+  // cuadricula urbana densa
+  ctx.strokeStyle = '#5c574d';
+  for(let x=0;x<w;x+=24){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y=0;y<h;y+=22){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  const coloresTecho = ['#b5522f','#c2c2c2','#9a6a3f','#7d8a99'];
+  for(let i=0;i<220;i++){
+    ctx.fillStyle = coloresTecho[i%coloresTecho.length];
+    const bx = Math.random()*w;
+    const by = Math.random()*h;
+    ctx.fillRect(bx,by,14,12);
+  }
+  // rio (mismo trazo, ahora encajonado / mas angosto por urbanizacion)
+  ctx.fillStyle = '#2e6fa8';
+  ctx.beginPath();
+  ctx.moveTo(0,h*0.21); ctx.quadraticCurveTo(w*0.4,h*0.33,w,h*0.17);
+  ctx.lineTo(w,h*0.23); ctx.quadraticCurveTo(w*0.4,h*0.38,0,h*0.27);
+  ctx.closePath(); ctx.fill();
+  // avenida pavimentada
+  ctx.fillStyle = '#3a3a3a';
+  ctx.fillRect(0,h*0.72,w,h*0.06);
+  // pequeño parque remanente
+  ctx.fillStyle = '#3f7a3f';
+  ctx.beginPath(); ctx.arc(w*0.82,h*0.85,20,0,Math.PI*2); ctx.fill();
+}
+
+dibujarEscenaAntes(ctxAntes, cvAntes.width, cvAntes.height);
+dibujarEscenaDespues(ctxDespues, cvDespues.width, cvDespues.height);
+
+const rangoComparar = document.getElementById('rango-comparar');
+const clipAntes = document.getElementById('clip-antes');
+function actualizarComparar(){
+  const pct = rangoComparar.value;
+  clipAntes.style.width = pct+'%';
+}
+rangoComparar.addEventListener('input', actualizarComparar);
+actualizarComparar();
+
+/* =======================================================================
+   QUIZ DE REPASO
+   ======================================================================= */
+const preguntas = [
+  {
+    q:'¿Qué le pasa a un edificio alto en una imagen satelital tomada con un ángulo off-nadir grande?',
+    opciones:[
+      'Se ve exactamente igual que si el satélite estuviera justo encima',
+      'Aparece "recostado", desplazado hacia el borde de la imagen, proporcional a su altura',
+      'Desaparece por completo de la imagen',
+      'Cambia de color según el ángulo'
+    ],
+    correcta:1,
+    exp:'El desplazamiento aparente ≈ altura × tan(ángulo): entre más alto el objeto y mayor el ángulo, más se "recuesta" en la imagen.'
+  },
+  {
+    q:'¿Por qué en la proyección Mercator Groenlandia se ve casi tan grande como África?',
+    opciones:[
+      'Porque Groenlandia efectivamente mide casi lo mismo que África',
+      'Porque Mercator exagera el área cerca de los polos para preservar los ángulos, útil en navegación',
+      'Porque los satélites miden mal las zonas polares',
+      'Porque Groenlandia está más cerca del ecuador de lo que pensamos'
+    ],
+    correcta:1,
+    exp:'Mercator preserva ángulos (por eso sirve para navegar), pero a cambio infla mucho el área cerca de los polos; África es en realidad ~14 veces más grande que Groenlandia.'
+  },
+  {
+    q:'¿Qué tienen en común las proyecciones senoidal y Mollweide?',
+    opciones:[
+      'Ambas preservan el área real de las superficies',
+      'Ambas preservan los ángulos exactos como Mercator',
+      'Ambas solo muestran un hemisferio a la vez',
+      'Ninguna de las anteriores'
+    ],
+    correcta:0,
+    exp:'Son proyecciones de área igual (equal-area): un círculo de Tissot cambia de forma pero no de tamaño relativo, a diferencia de Mercator.'
+  },
+  {
+    q:'¿Qué proyección se parece más a "lo que ve" un satélite en un instante dado?',
+    opciones:['Mercator','Equirectangular','Ortográfica (vista de globo)','Sinusoidal'],
+    correcta:2,
+    exp:'La proyección ortográfica simula ver la esfera terrestre desde el espacio, mostrando solo un hemisferio, igual que un sensor en un momento dado.'
+  },
+  {
+    q:'En una imagen satelital, ¿qué suele indicar una cuadrícula muy regular de manzanas y lotes similares?',
+    opciones:[
+      'Un asentamiento informal reciente',
+      'Una zona con trazo urbano planificado antes de construirse',
+      'Un área agrícola sin ningún desarrollo',
+      'Un cuerpo de agua'
+    ],
+    correcta:1,
+    exp:'Los patrones regulares (calles rectas, lotes parecidos) casi siempre reflejan que hubo un fraccionamiento o plan urbano previo.'
+  },
+  {
+    q:'¿Cómo se relaciona la teledetección con el estudio de la isla de calor urbana?',
+    opciones:[
+      'No tiene relación alguna',
+      'Se usan bandas térmicas infrarrojas para medir cómo distintas superficies (concreto, vegetación) retienen o liberan calor',
+      'Solo se puede medir con termómetros en la calle',
+      'Únicamente sirve para predecir el clima, no la temperatura urbana'
+    ],
+    correcta:1,
+    exp:'Las bandas térmicas permiten estimar la temperatura superficial (LST) y compararla entre zonas con distinta cobertura de suelo, la base de los estudios de isla de calor urbana.'
+  },
+  {
+    q:'¿Cuál es el valor principal de un análisis multitemporal (varias imágenes de años distintos) frente a una sola imagen?',
+    opciones:[
+      'Permite ver el cambio a lo largo del tiempo, no solo un estado fijo',
+      'Es más barato que tomar una sola imagen',
+      'Elimina la necesidad de corrección atmosférica',
+      'Aumenta automáticamente la resolución espacial'
+    ],
+    correcta:0,
+    exp:'Comparar imágenes de distintos años permite detectar y cuantificar cambios: crecimiento urbano, deforestación, pérdida de cuerpos de agua, etc.'
+  },
+];
+
+const listaQuiz = document.getElementById('lista-quiz');
+const elPuntaje = document.getElementById('puntaje');
+document.getElementById('total-preguntas').textContent = preguntas.length;
+let puntaje = 0;
+let respondidas = new Set();
+
+function renderQuiz(){
+  listaQuiz.innerHTML='';
+  puntaje = 0; respondidas.clear();
+  elPuntaje.textContent = puntaje;
+  preguntas.forEach((p, idx)=>{
+    const item = document.createElement('div');
+    item.className='quiz-item';
+    const h3 = document.createElement('h3');
+    h3.textContent = `${idx+1}. ${p.q}`;
+    item.appendChild(h3);
+    const opts = document.createElement('div');
+    opts.className='opciones';
+    const feedback = document.createElement('div');
+    feedback.className='feedback';
+
+    p.opciones.forEach((texto, oIdx)=>{
+      const b = document.createElement('button');
+      b.className='opcion';
+      b.textContent = texto;
+      b.addEventListener('click', ()=>{
+        if (respondidas.has(idx)) return;
+        respondidas.add(idx);
+        const botones = opts.querySelectorAll('.opcion');
+        botones.forEach((bt,i2)=>{
+          bt.disabled = true;
+          if (i2===p.correcta) bt.classList.add('correcta');
+        });
+        if (oIdx===p.correcta){
+          puntaje++;
+          feedback.textContent = '✓ Correcto. '+p.exp;
+          feedback.className='feedback ok';
+        } else {
+          b.classList.add('incorrecta');
+          feedback.textContent = '✗ '+p.exp;
+          feedback.className='feedback bad';
+        }
+        elPuntaje.textContent = puntaje;
+      });
+      opts.appendChild(b);
+    });
+    item.appendChild(opts);
+    item.appendChild(feedback);
+    listaQuiz.appendChild(item);
+  });
+}
+document.getElementById('btn-reiniciar').addEventListener('click', renderQuiz);
+renderQuiz();
+</script>
+</body>
+</html>

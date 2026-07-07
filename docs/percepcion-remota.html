@@ -48,9 +48,10 @@ a{color:var(--cyan);}
   backdrop-filter:blur(8px);
   border-bottom:1px solid var(--line);
 }
-.topbar .wrap{display:flex; align-items:center; justify-content:space-between; padding:12px 22px;}
+.topbar .wrap{display:flex; align-items:center; justify-content:space-between; padding:12px 22px; gap:12px; flex-wrap:wrap;}
 .topbar .marca{font-family:var(--mono); font-size:.82rem; letter-spacing:.06em; color:var(--text-dim);}
 .topbar .marca b{color:var(--amber); font-weight:600;}
+.topbar .links{display:flex; gap:16px;}
 .volver{color:var(--text-dim); text-decoration:none; font-size:.86rem; font-family:var(--mono);}
 .volver:hover{color:var(--cyan);}
 
@@ -186,7 +187,10 @@ footer a{color:var(--text-dim); text-decoration:underline;}
 <div class="topbar">
   <div class="wrap">
     <div class="marca">CH · <b>Percepción remota</b> — Satélites y Sims</div>
-    <a class="volver" href="index.html">← Volver al inicio</a>
+    <div class="links">
+      <a class="volver" href="distorsion-proyecciones.html">Día 2: distorsión y proyecciones ↪</a>
+      <a class="volver" href="index.html">← Volver al inicio</a>
+    </div>
   </div>
 </div>
 
@@ -380,7 +384,7 @@ footer a{color:var(--text-dim); text-decoration:underline;}
 
 <footer>
   <div class="wrap">
-    Página de apoyo del curso <strong>Satélites y Sims</strong> · <a href="index.html">← Volver al inicio</a> · <a href="syllabus.html">Ver carta descriptiva</a>
+    Página de apoyo del curso <strong>Satélites y Sims</strong> · <a href="index.html">← Volver al inicio</a> · <a href="distorsion-proyecciones.html">Día 2: distorsión y proyecciones</a> · <a href="syllabus.html">Ver carta descriptiva</a>
   </div>
 </footer>
 
