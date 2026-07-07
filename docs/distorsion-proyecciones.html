@@ -127,9 +127,11 @@ table.datos th{color:var(--text-dim); font-weight:500;}
 
 /* comparador antes/despues */
 .compare-stage{position:relative; border-radius:6px; overflow:hidden; border:1px solid var(--line); user-select:none;}
-.compare-stage canvas{display:block; width:100%;}
-.compare-clip{position:absolute; top:0; left:0; height:100%; overflow:hidden; border-right:2px solid var(--amber);}
-.compare-clip canvas{position:absolute; top:0; left:0; height:100%;}
+.compare-stage img{display:block; width:100%;}
+.compare-stage img.antes{position:absolute; top:0; left:0;}
+.compare-divisor{position:absolute; top:0; bottom:0; width:2px; background:var(--amber); box-shadow:0 0 6px rgba(255,177,60,.6); pointer-events:none;}
+.compare-credito{font-family:var(--mono); font-size:.74rem; color:var(--text-dim); margin-top:8px;}
+.compare-credito a{color:var(--text-dim);}
 .compare-tag{
   position:absolute; top:10px; font-family:var(--mono); font-size:.72rem; letter-spacing:.06em;
   background:rgba(6,9,17,0.7); border:1px solid var(--line); padding:3px 9px; border-radius:3px; color:var(--text-dim);
@@ -238,7 +240,7 @@ footer a{color:var(--text-dim); text-decoration:underline;}
       <canvas class="viz" id="canvas-proyeccion" width="900" height="480"></canvas>
       <div class="nota" id="descripcion-proyeccion">Selecciona una proyección arriba.</div>
     </div>
-    <div class="nota" style="margin-top:18px;">Ejemplo real: en la proyección Mercator, Groenlandia se ve casi tan grande como África — pero África mide en realidad <b>~14 veces más</b> que Groenlandia. Puedes comprobarlo tú mismo arrastrando países en <a href="https://www.thetruesize.com/" target="_blank" rel="noopener">thetruesize.com</a>.</div>
+    <div class="nota" style="margin-top:18px;">Ejemplo real: en la proyección Mercator, Groenlandia se ve casi tan grande como África — pero África mide en realidad <b>~14 veces más</b> que Groenlandia. Puedes comprobarlo tú mismo arrastrando países en la herramienta <i>The True Size Of…</i>, en Recursos más abajo.</div>
   </section>
 
   <!-- ============ 10. PLANEACIÓN URBANA ============ -->
@@ -257,19 +259,19 @@ footer a{color:var(--text-dim); text-decoration:underline;}
   <!-- ============ 11. COMPARACIÓN MULTITEMPORAL ============ -->
   <section class="modulo wrap" id="multitemporal">
     <div class="chan"><span class="dot"></span>CH-11 · ANÁLISIS MULTITEMPORAL</div>
-    <h2>La misma zona, treinta años después</h2>
-    <p class="intro">Una sola imagen satelital es una fotografía; una <b>serie de imágenes en el tiempo</b> es una historia. Arrastra la línea para comparar el mismo terreno antes y después de un proceso de urbanización.</p>
+    <h2>El mismo bosque, antes y después de un huracán</h2>
+    <p class="intro">Una sola imagen satelital es una fotografía; una <b>serie de imágenes en el tiempo</b> es una historia. Arrastra la línea para comparar el dosel de un bosque en Puerto Rico dañado por el huracán María frente a su estado actual.</p>
     <div class="panel">
       <div class="compare-stage" id="escenario-comparar">
-        <canvas id="canvas-despues" width="480" height="300"></canvas>
-        <div class="compare-clip" id="clip-antes">
-          <canvas id="canvas-antes" width="480" height="300"></canvas>
-        </div>
-        <div class="compare-tag izq">≈1995</div>
-        <div class="compare-tag der">≈2025</div>
+        <img src="assets/pr-bosque-despues.jpg" alt="Fotografía aérea de un bosque en Puerto Rico, estado actual del dosel">
+        <img class="antes" id="img-antes" src="assets/pr-bosque-antes.jpg" alt="Fotografía aérea del mismo bosque en Puerto Rico, con daño de dosel por el huracán María" style="clip-path:inset(0 50% 0 0);">
+        <div class="compare-divisor" id="divisor-comparar" style="left:50%;"></div>
+        <div class="compare-tag izq">Antes</div>
+        <div class="compare-tag der">Actual</div>
       </div>
       <label class="ctl" style="margin-top:14px;">Arrastra para comparar en el tiempo</label>
       <input type="range" id="rango-comparar" min="0" max="100" value="50" step="1">
+      <div class="compare-credito">Fotografías aéreas de un bosque en Puerto Rico · Crédito: NASA Earth Observatory — <a href="https://science.nasa.gov/earth/hurricane-marias-damage-to-puerto-ricos-forests/" target="_blank" rel="noopener">Hurricane Maria's Damage to Puerto Rico's Forests</a></div>
       <div class="nota">Este es exactamente el ejercicio que harás el día de mañana en la <b>Sección 1</b> con imágenes reales de tu ciudad: comparar Sentinel-2/Landsat de distintos años para detectar cambios en vegetación, urbanización y cuerpos de agua — la base de tu mapa comparativo multitemporal.</div>
     </div>
   </section>
@@ -295,6 +297,10 @@ footer a{color:var(--text-dim); text-decoration:underline;}
     <div class="recurso-card">
       <div><h4>NASA · Images of Change</h4><p>Galería de pares de imágenes satelitales "antes / después" de NASA, con control deslizante para comparar años.</p></div>
       <a class="boton" href="https://science.nasa.gov/earth/multimedia/interactives/images-of-change/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+    <div class="recurso-card">
+      <div><h4>NASA Earth Observatory · Daño del huracán María a los bosques de Puerto Rico</h4><p>Artículo de origen de las fotografías aéreas usadas en el comparador antes/después de esta página.</p></div>
+      <a class="boton" href="https://science.nasa.gov/earth/hurricane-marias-damage-to-puerto-ricos-forests/" target="_blank" rel="noopener">Abrir ↗</a>
     </div>
     <div class="recurso-card">
       <div><h4>Google Earth Engine Timelapse</h4><p>Video interactivo y navegable del planeta completo, año por año, de 1984 a la actualidad.</p></div>
@@ -739,71 +745,13 @@ dibujarZonas(null);
 /* =======================================================================
    11. COMPARACIÓN MULTITEMPORAL (ANTES / DESPUÉS)
    ======================================================================= */
-const cvAntes = document.getElementById('canvas-antes');
-const cvDespues = document.getElementById('canvas-despues');
-const ctxAntes = cvAntes.getContext('2d');
-const ctxDespues = cvDespues.getContext('2d');
-
-function dibujarEscenaAntes(ctx,w,h){
-  ctx.fillStyle = '#4f7a3d';
-  ctx.fillRect(0,0,w,h);
-  // parcelas agricolas
-  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-  for(let x=0;x<w;x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
-  for(let y=0;y<h;y+=36){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
-  // rio
-  ctx.fillStyle = '#2e6fa8';
-  ctx.beginPath();
-  ctx.moveTo(0,h*0.2); ctx.quadraticCurveTo(w*0.4,h*0.35,w,h*0.15);
-  ctx.lineTo(w,h*0.24); ctx.quadraticCurveTo(w*0.4,h*0.44,0,h*0.29);
-  ctx.closePath(); ctx.fill();
-  // camino de terraceria
-  ctx.strokeStyle = '#a08a63';
-  ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(0,h*0.75); ctx.lineTo(w,h*0.7); ctx.stroke();
-  ctx.lineWidth = 1;
-  // un par de casas dispersas
-  ctx.fillStyle = '#8a6a4a';
-  ctx.fillRect(w*0.2,h*0.55,10,10);
-  ctx.fillRect(w*0.65,h*0.62,10,10);
-}
-
-function dibujarEscenaDespues(ctx,w,h){
-  ctx.fillStyle = '#7d7666';
-  ctx.fillRect(0,0,w,h);
-  // cuadricula urbana densa
-  ctx.strokeStyle = '#5c574d';
-  for(let x=0;x<w;x+=24){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
-  for(let y=0;y<h;y+=22){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
-  const coloresTecho = ['#b5522f','#c2c2c2','#9a6a3f','#7d8a99'];
-  for(let i=0;i<220;i++){
-    ctx.fillStyle = coloresTecho[i%coloresTecho.length];
-    const bx = Math.random()*w;
-    const by = Math.random()*h;
-    ctx.fillRect(bx,by,14,12);
-  }
-  // rio (mismo trazo, ahora encajonado / mas angosto por urbanizacion)
-  ctx.fillStyle = '#2e6fa8';
-  ctx.beginPath();
-  ctx.moveTo(0,h*0.21); ctx.quadraticCurveTo(w*0.4,h*0.33,w,h*0.17);
-  ctx.lineTo(w,h*0.23); ctx.quadraticCurveTo(w*0.4,h*0.38,0,h*0.27);
-  ctx.closePath(); ctx.fill();
-  // avenida pavimentada
-  ctx.fillStyle = '#3a3a3a';
-  ctx.fillRect(0,h*0.72,w,h*0.06);
-  // pequeño parque remanente
-  ctx.fillStyle = '#3f7a3f';
-  ctx.beginPath(); ctx.arc(w*0.82,h*0.85,20,0,Math.PI*2); ctx.fill();
-}
-
-dibujarEscenaAntes(ctxAntes, cvAntes.width, cvAntes.height);
-dibujarEscenaDespues(ctxDespues, cvDespues.width, cvDespues.height);
-
 const rangoComparar = document.getElementById('rango-comparar');
-const clipAntes = document.getElementById('clip-antes');
+const imgAntes = document.getElementById('img-antes');
+const divisorComparar = document.getElementById('divisor-comparar');
 function actualizarComparar(){
   const pct = rangoComparar.value;
-  clipAntes.style.width = pct+'%';
+  imgAntes.style.clipPath = `inset(0 ${100-pct}% 0 0)`;
+  divisorComparar.style.left = pct+'%';
 }
 rangoComparar.addEventListener('input', actualizarComparar);
 actualizarComparar();
