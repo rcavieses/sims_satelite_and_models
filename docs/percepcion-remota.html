@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Percepción remota: cómo "ven" los satélites</title>
+<meta name="description" content="Explorador interactivo de percepción remota satelital: espectro, bandas, reflectancia, resolución espacial y cuantización.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e1a;
+  --bg-panel:#121a2c;
+  --bg-panel-alt:#17213a;
+  --line:#263356;
+  --text:#e8ecf4;
+  --text-dim:#8d9ac2;
+  --amber:#ffb13c;
+  --amber-dim:#8a6a34;
+  --cyan:#4fd8c4;
+  --coral:#ff6b6b;
+  --ok:#4ade80;
+  --mono:'IBM Plex Mono', ui-monospace, monospace;
+  --display:'Space Grotesk', ui-sans-serif, sans-serif;
+  --body:'Inter', ui-sans-serif, sans-serif;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 700px at 85% -10%, #12203a 0%, transparent 60%),
+    radial-gradient(900px 600px at -10% 20%, #14243a 0%, transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  line-height:1.55;
+}
+img{max-width:100%;}
+a{color:var(--cyan);}
+.wrap{max-width:1040px; margin:0 auto; padding:0 22px;}
+
+/* ---------- NAV ---------- */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  background:rgba(10,14,26,0.86);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.topbar .wrap{display:flex; align-items:center; justify-content:space-between; padding:12px 22px; gap:12px; flex-wrap:wrap;}
+.topbar .marca{font-family:var(--mono); font-size:.82rem; letter-spacing:.06em; color:var(--text-dim);}
+.topbar .marca b{color:var(--amber); font-weight:600;}
+.topbar .links{display:flex; gap:16px;}
+.volver{color:var(--text-dim); text-decoration:none; font-size:.86rem; font-family:var(--mono);}
+.volver:hover{color:var(--cyan);}
+
+/* ---------- HERO ---------- */
+.hero{position:relative; border-bottom:1px solid var(--line); overflow:hidden;}
+#hero-canvas{display:block; width:100%; height:min(62vh,520px); background:#060911;}
+.hero-overlay{
+  position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end;
+  pointer-events:none; padding:0 0 28px 0;
+}
+.hero-overlay .wrap{width:100%;}
+.eyebrow{
+  font-family:var(--mono); font-size:.78rem; letter-spacing:.12em; color:var(--amber);
+  text-transform:uppercase; display:inline-block; margin-bottom:10px;
+  border:1px solid var(--amber-dim); padding:3px 10px; border-radius:3px; background:rgba(255,177,60,0.08);
+}
+.hero h1{
+  font-family:var(--display); font-size:clamp(1.7rem,4.6vw,3rem); line-height:1.08; margin:0 0 14px 0;
+  max-width:760px; text-shadow:0 4px 30px rgba(0,0,0,.6);
+}
+.hero p.tagline{max-width:600px; color:var(--text-dim); font-size:1rem; margin:0; text-shadow:0 2px 12px rgba(0,0,0,.7);}
+.telemetry{
+  position:absolute; top:16px; right:22px; font-family:var(--mono); font-size:.72rem; color:var(--cyan);
+  text-align:right; background:rgba(6,9,17,0.55); border:1px solid rgba(79,216,196,0.25); border-radius:4px;
+  padding:8px 10px; line-height:1.5; min-width:180px;
+}
+.telemetry .lbl{color:var(--text-dim);}
+
+/* ---------- SECTIONS ---------- */
+main{padding:10px 0 80px 0;}
+section.modulo{padding:52px 0; border-bottom:1px solid var(--line);}
+section.modulo:last-of-type{border-bottom:none;}
+.modulo .chan{
+  font-family:var(--mono); font-size:.76rem; letter-spacing:.08em; color:var(--cyan);
+  display:inline-flex; align-items:center; gap:8px; margin-bottom:12px;
+}
+.modulo .chan .dot{width:7px; height:7px; border-radius:50%; background:var(--cyan); box-shadow:0 0 8px var(--cyan);}
+.modulo h2{font-family:var(--display); font-size:clamp(1.3rem,2.6vw,1.9rem); margin:0 0 10px 0;}
+.modulo .intro{color:var(--text-dim); max-width:680px; margin:0 0 24px 0;}
+.panel{
+  background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-alt) 100%);
+  border:1px solid var(--line); border-radius:10px; padding:22px;
+}
+.grid2{display:grid; grid-template-columns:1.1fr 1fr; gap:22px;}
+@media (max-width:760px){.grid2{grid-template-columns:1fr;}}
+
+label.ctl{display:block; font-family:var(--mono); font-size:.78rem; color:var(--text-dim); margin-bottom:6px;}
+input[type=range]{
+  -webkit-appearance:none; width:100%; height:4px; border-radius:2px;
+  background:var(--line); outline:none; margin:6px 0 14px 0;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+  background:var(--amber); border:2px solid #0a0e1a; cursor:pointer; box-shadow:0 0 6px rgba(255,177,60,.6);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px; height:16px; border-radius:50%; background:var(--amber); border:2px solid #0a0e1a; cursor:pointer;
+}
+.readout{font-family:var(--mono); font-size:.9rem; color:var(--amber);}
+.readout .u{color:var(--text-dim); font-size:.78rem;}
+
+.btnrow{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+.chip{
+  font-family:var(--mono); font-size:.78rem; padding:7px 12px; border-radius:20px;
+  border:1px solid var(--line); background:transparent; color:var(--text-dim); cursor:pointer;
+  transition:all .15s ease;
+}
+.chip:hover{border-color:var(--cyan); color:var(--text);}
+.chip.activo{background:var(--cyan); color:#052; border-color:var(--cyan); color:#08201c; font-weight:600;}
+
+canvas.viz{width:100%; display:block; border-radius:6px; background:#060a13; border:1px solid var(--line);}
+.swatchrow{display:flex; gap:14px; align-items:center; margin-top:14px; flex-wrap:wrap;}
+.swatch{width:56px; height:56px; border-radius:8px; border:1px solid var(--line); flex-shrink:0;}
+.swatch-lbl{font-family:var(--mono); font-size:.76rem; color:var(--text-dim);}
+.nota{font-size:.86rem; color:var(--text-dim); margin-top:14px; padding-top:14px; border-top:1px dashed var(--line);}
+.nota b{color:var(--text);}
+
+.ejemplo-tamano{
+  display:flex; align-items:center; gap:12px; margin-top:16px; padding:14px 16px;
+  background:rgba(255,177,60,0.1); border:1.5px solid var(--amber); border-radius:8px;
+  font-size:.92rem; color:var(--text);
+}
+.ejemplo-tamano span:first-child{font-size:1.8rem; line-height:1; flex-shrink:0;}
+.ejemplo-tamano .rotulo{
+  display:block; font-family:var(--mono); font-size:.7rem; letter-spacing:.08em;
+  color:var(--amber); text-transform:uppercase; margin-bottom:3px;
+}
+
+table.datos{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:.8rem; margin-top:6px;}
+table.datos th, table.datos td{border-bottom:1px solid var(--line); padding:6px 8px; text-align:left;}
+table.datos th{color:var(--text-dim); font-weight:500;}
+
+/* ---------- QUIZ ---------- */
+.quiz-item{border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:16px; background:var(--bg-panel);}
+.quiz-item h3{font-family:var(--display); font-size:1.02rem; margin:0 0 14px 0; font-weight:600;}
+.opciones{display:grid; gap:8px;}
+.opcion{
+  text-align:left; font-family:var(--body); font-size:.92rem; color:var(--text);
+  background:var(--bg-panel-alt); border:1px solid var(--line); border-radius:7px; padding:10px 14px;
+  cursor:pointer; transition:all .12s ease;
+}
+.opcion:hover{border-color:var(--cyan);}
+.opcion.correcta{border-color:var(--ok); background:rgba(74,222,128,0.12); color:var(--ok);}
+.opcion.incorrecta{border-color:var(--coral); background:rgba(255,107,107,0.12); color:var(--coral);}
+.opcion:disabled{cursor:default;}
+.feedback{font-family:var(--mono); font-size:.8rem; margin-top:10px; min-height:1.2em;}
+.feedback.ok{color:var(--ok);}
+.feedback.bad{color:var(--coral);}
+.marcador{
+  position:sticky; top:57px; z-index:40; display:flex; justify-content:space-between; align-items:center;
+  background:var(--bg-panel); border:1px solid var(--line); border-radius:8px; padding:10px 16px; margin-bottom:20px;
+  font-family:var(--mono); font-size:.84rem;
+}
+.marcador b{color:var(--amber);}
+.reiniciar{
+  font-family:var(--mono); font-size:.78rem; color:var(--text-dim); background:transparent;
+  border:1px solid var(--line); border-radius:6px; padding:6px 12px; cursor:pointer;
+}
+.reiniciar:hover{border-color:var(--amber); color:var(--amber);}
+
+footer{border-top:1px solid var(--line); padding:26px 0; color:var(--text-dim); font-size:.85rem; font-family:var(--mono);}
+footer a{color:var(--text-dim); text-decoration:underline;}
+
+.pixel-stage{position:relative;}
+.pixel-box{
+  position:absolute; border:2px solid var(--amber); box-shadow:0 0 0 2000px rgba(6,9,17,0.35);
+  pointer-events:none; box-sizing:border-box;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="marca">CH · <b>Percepción remota</b> — Satélites y Sims</div>
+    <div class="links">
+      <a class="volver" href="distorsion-proyecciones.html">Día 2: distorsión y proyecciones ↪</a>
+      <a class="volver" href="index.html">← Volver al inicio</a>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="telemetry" id="telemetria">
+    <div><span class="lbl">BANDA·</span> <span id="tm-banda">B02 AZUL</span></div>
+    <div><span class="lbl">λ·</span> <span id="tm-lambda">450–515 nm</span></div>
+    <div><span class="lbl">ALT·</span> <span id="tm-alt">786 km</span></div>
+    <div><span class="lbl">LAT/LON·</span> <span id="tm-latlon">--,--</span></div>
+  </div>
+  <div class="hero-overlay">
+    <div class="wrap">
+      <div class="eyebrow">Explorador interactivo</div>
+      <h1>¿Cómo "ve" un satélite tu ciudad?</h1>
+      <p class="tagline">Ningún satélite toma una "foto" como tu celular. Mide luz, banda por banda, y convierte esa medición en números. Explora cada paso del proceso.</p>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ 1. ESPECTRO ============ -->
+  <section class="modulo wrap" id="espectro">
+    <div class="chan"><span class="dot"></span>CH-01 · EL ESPECTRO ELECTROMAGNÉTICO</div>
+    <h2>La luz es más de lo que ves</h2>
+    <p class="intro">Tus ojos solo detectan una rebanada angosta de todas las ondas electromagnéticas que existen: la <b>luz visible</b>. Los satélites, en cambio, "ven" mucho más allá de esa rebanada. Mueve la barra y descubre qué hay a cada lado de lo visible.</p>
+    <div class="panel grid2">
+      <div>
+        <label class="ctl">Longitud de onda (λ)</label>
+        <input type="range" id="rango-espectro" min="100" max="1400" value="550" step="1">
+        <div class="readout"><span id="valor-espectro">550</span> <span class="u">nanómetros (nm)</span></div>
+        <div class="swatchrow">
+          <div class="swatch" id="muestra-espectro" style="background:#ffffff;"></div>
+          <div>
+            <div class="swatch-lbl">Color percibido: <b id="etiqueta-color" style="color:var(--text)">—</b></div>
+            <div class="swatch-lbl">Región del espectro: <b id="etiqueta-region" style="color:var(--text)">—</b></div>
+          </div>
+        </div>
+        <div class="ejemplo-tamano" id="ejemplo-tamano">
+          <span id="ejemplo-emoji">🦠</span>
+          <span><span class="rotulo">Comparación de escala</span>Esa longitud de onda mide aproximadamente lo mismo que <b id="etiqueta-ejemplo" style="color:var(--amber)">—</b></span>
+        </div>
+      </div>
+      <div>
+        <canvas class="viz" id="canvas-espectro" width="480" height="150"></canvas>
+      </div>
+    </div>
+    <div class="nota">El <b>espectro visible</b> va de ~380 a ~750 nm (violeta → rojo). Por debajo está el <b>ultravioleta</b> y los <b>rayos X</b>; por encima, el <b>infrarrojo</b> y las <b>microondas</b>. Los sensores satelitales están diseñados para "ver" justo las regiones donde la superficie terrestre da más información: visible, infrarrojo cercano (NIR) e infrarrojo de onda corta (SWIR).</div>
+  </section>
+
+  <!-- ============ 2. BANDAS ============ -->
+  <section class="modulo wrap" id="bandas">
+    <div class="chan"><span class="dot"></span>CH-02 · BANDAS SATELITALES</div>
+    <h2>Un satélite no toma una foto: mide bandas</h2>
+    <p class="intro">Un sensor multiespectral (como Sentinel-2) mide la energía reflejada en <b>varias bandas por separado</b>, cada una una rebanada específica del espectro. Selecciona una banda para ver dónde cae y para qué sirve.</p>
+    <div class="panel">
+      <div class="btnrow" id="botones-banda"></div>
+      <canvas class="viz" id="canvas-bandas" width="900" height="170"></canvas>
+      <div class="nota" id="descripcion-banda">Selecciona una banda arriba.</div>
+    </div>
+    <div class="nota" style="margin-top:18px;">Combinar bandas es lo que permite calcular índices como el <b>NDVI</b> (vegetación) usando la diferencia entre rojo e infrarrojo cercano — la vegetación sana refleja mucho NIR y absorbe rojo.</div>
+  </section>
+
+  <!-- ============ 3. COLOR EN PIXELES: TIERRA Y MAR ============ -->
+  <section class="modulo wrap" id="reflectancia-superficie">
+    <div class="chan"><span class="dot"></span>CH-03 · REFLECTANCIA POR SUPERFICIE</div>
+    <h2>Por qué el agua se ve oscura y la vegetación brillante</h2>
+    <p class="intro">Cada tipo de superficie refleja distinta cantidad de energía en cada banda. Eso es su <b>firma espectral</b>. Elige una superficie y observa cuánta luz refleja en cada banda.</p>
+    <div class="panel grid2">
+      <div>
+        <div class="btnrow" id="botones-superficie"></div>
+        <canvas class="viz" id="canvas-superficie" width="440" height="240"></canvas>
+      </div>
+      <div>
+        <div class="swatchrow">
+          <div class="swatch" id="muestra-superficie" style="background:#333;"></div>
+          <div class="swatch-lbl">Color "verdadero" resultante (R,G,B)<br><b id="rgb-superficie" style="color:var(--text)">—</b></div>
+        </div>
+        <table class="datos" id="tabla-superficie"></table>
+        <div class="nota" id="texto-superficie">—</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. REFLECTANCIA E INTERFERENCIA ATMOSFÉRICA ============ -->
+  <section class="modulo wrap" id="atmosfera">
+    <div class="chan"><span class="dot"></span>CH-04 · REFLECTANCIA E INTERFERENCIA ATMOSFÉRICA</div>
+    <h2>La atmósfera se mete en la medición</h2>
+    <p class="intro">La <b>reflectancia</b> es la fracción de luz solar que una superficie refleja de vuelta al espacio. Pero entre el suelo y el satélite hay ~100&nbsp;km de atmósfera: gases, vapor de agua y aerosoles que dispersan y absorben parte de esa luz antes de que llegue al sensor. Sube la interferencia y observa cómo se "ensucia" la señal.</p>
+    <div class="panel grid2">
+      <div>
+        <canvas class="viz" id="canvas-atmosfera" width="440" height="260"></canvas>
+      </div>
+      <div>
+        <label class="ctl">Interferencia atmosférica (aerosoles, nubes delgadas, vapor de agua)</label>
+        <input type="range" id="rango-atmosfera" min="0" max="100" value="20" step="1">
+        <div class="readout"><span id="valor-atmosfera">20</span><span class="u">%</span></div>
+        <div class="swatchrow">
+          <div>
+            <div class="swatch" id="muestra-real"></div>
+            <div class="swatch-lbl">Reflectancia real en superficie</div>
+          </div>
+          <div>
+            <div class="swatch" id="muestra-percibida"></div>
+            <div class="swatch-lbl">Lo que "percibe" el satélite</div>
+          </div>
+        </div>
+        <div class="nota">Por esto los científicos aplican <b>corrección atmosférica</b> a las imágenes crudas antes de analizarlas: es un intento de recuperar la reflectancia real de la superficie, quitando el efecto de la atmósfera.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. RESOLUCIÓN ESPACIAL ============ -->
+  <section class="modulo wrap" id="resolucion">
+    <div class="chan"><span class="dot"></span>CH-05 · RESOLUCIÓN ESPACIAL</div>
+    <h2>El tamaño del píxel decide qué puedes ver</h2>
+    <p class="intro">La <b>resolución espacial</b> es el área de terreno que representa un solo píxel. Un dron puede tener píxeles de 1 m; Sentinel-2, de 10 m; Landsat, de 30 m; MODIS, de 250 m. Misma escena, distinto detalle.</p>
+    <div class="panel">
+      <label class="ctl">Tamaño de píxel</label>
+      <input type="range" id="rango-resolucion" min="0" max="5" value="0" step="1">
+      <div class="readout"><span id="valor-resolucion">1 m</span> <span class="u">— <span id="sensor-resolucion">similar a un dron</span></span></div>
+      <canvas class="viz" id="canvas-resolucion" width="480" height="320"></canvas>
+      <div class="nota" id="texto-resolucion">A 1 m de resolución puedes distinguir autos, techos individuales y árboles por separado.</div>
+    </div>
+  </section>
+
+  <!-- ============ 6. PROMEDIO EN UN PIXEL ============ -->
+  <section class="modulo wrap" id="pixel-mixto">
+    <div class="chan"><span class="dot"></span>CH-06 · EL PROMEDIO DENTRO DE UN PÍXEL</div>
+    <h2>Un píxel casi nunca mide una sola cosa</h2>
+    <p class="intro">Cuando el área de un píxel cubre calles, techos y árboles a la vez, el sensor no elige uno: registra el <b>promedio</b> de toda la energía reflejada dentro de ese cuadro ("píxel mixto"). Mueve el recuadro y cambia su tamaño para verlo.</p>
+    <div class="panel grid2">
+      <div class="pixel-stage">
+        <canvas class="viz" id="canvas-mixto" width="440" height="300"></canvas>
+      </div>
+      <div>
+        <label class="ctl">Ubicación del píxel</label>
+        <div class="btnrow" id="botones-ubicacion"></div>
+        <label class="ctl">Tamaño del píxel (lado, en px de la escena)</label>
+        <input type="range" id="rango-mixto" min="10" max="140" value="40" step="2">
+        <div class="readout"><span id="valor-mixto">40</span> <span class="u">px de escena cubiertos</span></div>
+        <div class="swatchrow">
+          <div class="swatch" id="muestra-mixto"></div>
+          <div class="swatch-lbl">Valor promedio medido por el sensor<br><b id="rgb-mixto" style="color:var(--text)">—</b></div>
+        </div>
+        <div class="nota">Entre más grande el píxel, más se <b>mezclan</b> superficies distintas y más difícil es saber qué hay exactamente ahí — esta es la razón principal por la que la resolución espacial importa tanto.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7. CUANTIZACIÓN 255 ============ -->
+  <section class="modulo wrap" id="cuantizacion">
+    <div class="chan"><span class="dot"></span>CH-07 · CUANTIZACIÓN: DEL MUNDO CONTINUO A 256 NIVELES</div>
+    <h2>¿Por qué los valores van de 0 a 255?</h2>
+    <p class="intro">La energía que mide un sensor es continua (infinitos valores posibles), pero una computadora necesita guardar números discretos. Con <b>8 bits</b> se pueden representar exactamente 2⁸ = <b>256 niveles</b>, numerados del 0 al 255 — 0 es "nada de energía reflejada" y 255 es el máximo que el sensor puede registrar. Reduce los bits y observa qué se pierde.</p>
+    <div class="panel grid2">
+      <div>
+        <label class="ctl">Profundidad de bits</label>
+        <input type="range" id="rango-bits" min="1" max="8" value="8" step="1">
+        <div class="readout"><span id="valor-bits">8</span> <span class="u">bits → </span><span id="niveles-bits" class="readout">256 niveles (0–255)</span></div>
+        <canvas class="viz" id="canvas-cuantizacion" width="440" height="240"></canvas>
+      </div>
+      <div>
+        <label class="ctl">Valor de reflectancia individual</label>
+        <input type="range" id="rango-valor" min="0" max="255" value="180" step="1">
+        <div class="readout">Valor digital: <span id="valor-crudo">180</span> / 255</div>
+        <table class="datos">
+          <tr><th>Valor decimal</th><td id="dec-valor">180</td></tr>
+          <tr><th>Binario (8 bits)</th><td id="bin-valor" style="color:var(--cyan)">10110100</td></tr>
+          <tr><th>Reflectancia normalizada</th><td id="norm-valor">0.71</td></tr>
+        </table>
+        <div class="nota">Este mismo principio —dividir un rango continuo en 256 "cajones"— es el que usa cada canal (R, G, B) de una imagen digital normal. Por eso los colores de pantalla van de 0 a 255 por canal.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="modulo wrap" id="repaso">
+    <div class="chan"><span class="dot"></span>REPASO</div>
+    <h2>Ponte a prueba</h2>
+    <p class="intro">Ocho preguntas rápidas para verificar lo que acabas de explorar.</p>
+    <div class="marcador">
+      <span>Puntaje: <b id="puntaje">0</b> / <span id="total-preguntas">8</span></span>
+      <button class="reiniciar" id="btn-reiniciar">Reiniciar quiz</button>
+    </div>
+    <div id="lista-quiz"></div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Página de apoyo del curso <strong>Satélites y Sims</strong> · <a href="index.html">← Volver al inicio</a> · <a href="distorsion-proyecciones.html">Día 2: distorsión y proyecciones</a> · <a href="syllabus.html">Ver carta descriptiva</a>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* =======================================================================
+   UTILIDADES COMPARTIDAS
+   ======================================================================= */
+function nmToRGB(wavelength){
+  // Aproximación clásica de longitud de onda visible (380-750nm) a RGB.
+  let r=0,g=0,b=0;
+  const w = wavelength;
+  if (w>=380 && w<440){ r=-(w-440)/(440-380); g=0; b=1; }
+  else if (w>=440 && w<490){ r=0; g=(w-440)/(490-440); b=1; }
+  else if (w>=490 && w<510){ r=0; g=1; b=-(w-510)/(510-490); }
+  else if (w>=510 && w<580){ r=(w-510)/(580-510); g=1; b=0; }
+  else if (w>=580 && w<645){ r=1; g=-(w-645)/(645-580); b=0; }
+  else if (w>=645 && w<=750){ r=1; g=0; b=0; }
+  let factor=1;
+  if (w>=380 && w<420) factor = 0.3 + 0.7*(w-380)/(420-380);
+  else if (w>=700 && w<=750) factor = 0.3 + 0.7*(750-w)/(750-700);
+  else if (w<380 || w>750) factor = 0;
+  const gamma=0.8;
+  const adjust = c => c<=0 ? 0 : Math.round(255*Math.pow(c*factor, gamma));
+  return [adjust(r),adjust(g),adjust(b)];
+}
+function regionEspectro(w){
+  if (w<10) return 'Rayos X';
+  if (w<380) return 'Ultravioleta';
+  if (w<=750) return 'Luz visible';
+  if (w<1000) return 'Infrarrojo cercano (NIR)';
+  return 'Infrarrojo de onda corta (SWIR)';
+}
+function nombreColor(w){
+  if (w<380) return '(invisible al ojo humano)';
+  if (w<450) return 'Violeta';
+  if (w<485) return 'Azul';
+  if (w<500) return 'Cian';
+  if (w<565) return 'Verde';
+  if (w<590) return 'Amarillo';
+  if (w<625) return 'Naranja';
+  if (w<=750) return 'Rojo';
+  return '(invisible al ojo humano)';
+}
+function rgbCss(arr){return `rgb(${arr[0]},${arr[1]},${arr[2]})`;}
+
+// Referencias de objetos reales, ordenadas por tamaño (nm), para comparar contra la longitud de onda.
+const referenciasTamano = [
+  {nm:0.1,  emoji:'⚛️', texto:'un átomo de hidrógeno (~0.1 nm)'},
+  {nm:0.3,  emoji:'💧', texto:'una molécula de agua (~0.3 nm)'},
+  {nm:2,    emoji:'🧬', texto:'el ancho de una hebra de ADN (~2 nm)'},
+  {nm:20,   emoji:'🧫', texto:'un ribosoma dentro de una célula (~20 nm)'},
+  {nm:100,  emoji:'🦠', texto:'el virus de la influenza (gripe) (~100 nm)'},
+  {nm:120,  emoji:'🦠', texto:'el virus del VIH (~120 nm)'},
+  {nm:150,  emoji:'🦠', texto:'un coronavirus, incluyendo sus espículas (~150 nm)'},
+  {nm:200,  emoji:'🧫', texto:'Mycoplasma, la bacteria más pequeña conocida (~200 nm)'},
+  {nm:400,  emoji:'🔬', texto:'el límite de lo que un microscopio óptico normal puede distinguir (~400 nm)'},
+  {nm:600,  emoji:'🧫', texto:'el ancho de una bacteria pequeña, como una Salmonella (~600 nm)'},
+  {nm:1000, emoji:'💨', texto:'una partícula fina de humo u hollín (~1000 nm / 1 µm)'},
+  {nm:1300, emoji:'🌫️', texto:'una partícula fina de polvo o neblina (~1.3 µm)'},
+];
+
+function ejemploTamano(nm){
+  let mejor = referenciasTamano[0];
+  let mejorDif = Infinity;
+  referenciasTamano.forEach(ref=>{
+    const dif = Math.abs(Math.log(nm) - Math.log(ref.nm));
+    if (dif < mejorDif){ mejorDif = dif; mejor = ref; }
+  });
+  return mejor;
+}
+
+/* =======================================================================
+   1. ESPECTRO
+   ======================================================================= */
+const rangoEspectro = document.getElementById('rango-espectro');
+const valorEspectro = document.getElementById('valor-espectro');
+const muestraEspectro = document.getElementById('muestra-espectro');
+const etiquetaColor = document.getElementById('etiqueta-color');
+const etiquetaRegion = document.getElementById('etiqueta-region');
+const cvEspectro = document.getElementById('canvas-espectro');
+const ctxEspectro = cvEspectro.getContext('2d');
+
+function dibujarEspectro(actual){
+  const w = cvEspectro.width, h = cvEspectro.height;
+  ctxEspectro.clearRect(0,0,w,h);
+  const min=380, max=750;
+  const barY = 30, barH = 46;
+  for(let x=0;x<w;x++){
+    const nm = min + (x/w)*(max-min);
+    const [r,g,b] = nmToRGB(nm);
+    ctxEspectro.fillStyle = `rgb(${r},${g},${b})`;
+    ctxEspectro.fillRect(x, barY, 1, barH);
+  }
+  // zonas fuera de visible
+  ctxEspectro.fillStyle = '#1c2740';
+  ctxEspectro.fillRect(0, barY+barH+14, w, 18);
+  ctxEspectro.fillStyle = '#66738f';
+  ctxEspectro.font = '11px IBM Plex Mono, monospace';
+  ctxEspectro.fillText('UV', 4, barY+barH+27);
+  ctxEspectro.fillText('380 nm', w*0.02, barY+barH+27);
+  ctxEspectro.fillText('750 nm', w*0.86, barY+barH+27);
+  ctxEspectro.fillText('IR / NIR →', w-90, barY+barH+27);
+
+  // marcador de posición actual
+  let markX;
+  if (actual < min) markX = 6;
+  else if (actual > max) markX = w-6;
+  else markX = ((actual-min)/(max-min))*w;
+  ctxEspectro.strokeStyle = '#ffb13c';
+  ctxEspectro.lineWidth = 2;
+  ctxEspectro.beginPath();
+  ctxEspectro.moveTo(markX, barY-8);
+  ctxEspectro.lineTo(markX, barY+barH+8);
+  ctxEspectro.stroke();
+  ctxEspectro.fillStyle = '#ffb13c';
+  ctxEspectro.beginPath();
+  ctxEspectro.moveTo(markX-5, barY-8);
+  ctxEspectro.lineTo(markX+5, barY-8);
+  ctxEspectro.lineTo(markX, barY-1);
+  ctxEspectro.fill();
+}
+
+function actualizarEspectro(){
+  const w = parseFloat(rangoEspectro.value);
+  valorEspectro.textContent = w;
+  const dentroVisible = (w>=380 && w<=750);
+  const rgb = dentroVisible ? nmToRGB(w) : [40,46,64];
+  muestraEspectro.style.background = rgbCss(rgb);
+  etiquetaColor.textContent = nombreColor(w);
+  etiquetaRegion.textContent = regionEspectro(w);
+  const ref = ejemploTamano(w);
+  document.getElementById('etiqueta-ejemplo').textContent = ref.texto;
+  document.getElementById('ejemplo-emoji').textContent = ref.emoji;
+  dibujarEspectro(w);
+}
+rangoEspectro.addEventListener('input', actualizarEspectro);
+actualizarEspectro();
+
+/* =======================================================================
+   2. BANDAS SATELITALES
+   ======================================================================= */
+const bandas = [
+  {id:'azul', nombre:'B02 Azul', min:450, max:515, color:'#4fa8ff',
+   uso:'Penetra mejor el agua superficial; útil para distinguir suelo de vegetación y estudiar cuerpos de agua poco profundos.'},
+  {id:'verde', nombre:'B03 Verde', min:525, max:600, color:'#59d98a',
+   uso:'Sensible al "pico verde" que reflejan las hojas sanas; se usa para evaluar vigor de la vegetación.'},
+  {id:'rojo', nombre:'B04 Rojo', min:630, max:680, color:'#ff6b5c',
+   uso:'La clorofila absorbe fuertemente el rojo; junto con el NIR permite calcular el NDVI.'},
+  {id:'nir', nombre:'B08 Infrarrojo cercano (NIR)', min:845, max:885, color:'#c34fe0',
+   uso:'La vegetación sana lo refleja muchísimo (hojas internamente estructuradas); el agua lo absorbe casi todo.'},
+  {id:'swir1', nombre:'B11 SWIR 1', min:1560, max:1660, color:'#ffb13c',
+   uso:'Sensible al contenido de humedad en el suelo y la vegetación; ayuda a distinguir nieve de nubes.'},
+  {id:'swir2', nombre:'B12 SWIR 2', min:2100, max:2300, color:'#ff9e6d',
+   uso:'Útil para geología, tipos de roca/minerales y para detectar incendios activos.'},
+];
+const cvBandas = document.getElementById('canvas-bandas');
+const ctxBandas = cvBandas.getContext('2d');
+const espectroMin = 400, espectroMax = 2400;
+let bandaActiva = null;
+
+function dibujarBandas(){
+  const w = cvBandas.width, h = cvBandas.height;
+  ctxBandas.clearRect(0,0,w,h);
+  const baseY = 60, baseH = 46;
+  // fondo degradado aproximado visible->IR
+  for(let x=0;x<w;x++){
+    const nm = espectroMin + (x/w)*(espectroMax-espectroMin);
+    let color;
+    if (nm<=750){ const [r,g,b]=nmToRGB(nm); color=`rgb(${r},${g},${b})`; }
+    else { color = '#241a14'; }
+    ctxBandas.fillStyle = color;
+    ctxBandas.fillRect(x, baseY, 1, baseH);
+  }
+  ctxBandas.strokeStyle='#263356';
+  ctxBandas.strokeRect(0, baseY, w, baseH);
+
+  // resaltar bandas
+  bandas.forEach(b=>{
+    const x1 = ((b.min-espectroMin)/(espectroMax-espectroMin))*w;
+    const x2 = ((b.max-espectroMin)/(espectroMax-espectroMin))*w;
+    const activa = bandaActiva === b.id;
+    ctxBandas.fillStyle = activa ? b.color+'aa' : '#ffffff10';
+    ctxBandas.fillRect(x1, baseY-10, Math.max(x2-x1,2), baseH+20);
+    if(activa){
+      ctxBandas.strokeStyle = b.color;
+      ctxBandas.lineWidth = 2;
+      ctxBandas.strokeRect(x1, baseY-10, Math.max(x2-x1,2), baseH+20);
+    }
+    ctxBandas.fillStyle = activa ? '#e8ecf4' : '#66738f';
+    ctxBandas.font = '10px IBM Plex Mono, monospace';
+    ctxBandas.save();
+    ctxBandas.translate((x1+x2)/2, baseY-16);
+    ctxBandas.textAlign='center';
+    ctxBandas.fillText(b.id.toUpperCase(), 0, 0);
+    ctxBandas.restore();
+  });
+
+  ctxBandas.fillStyle = '#66738f';
+  ctxBandas.font = '11px IBM Plex Mono, monospace';
+  ctxBandas.fillText('400 nm (visible)', 4, baseY+baseH+22);
+  ctxBandas.fillText('~750 nm', w*0.28, baseY+baseH+22);
+  ctxBandas.fillText('infrarrojo (NIR / SWIR) →', w*0.55, baseY+baseH+22);
+  ctxBandas.fillText('2400 nm', w-70, baseY+baseH+22);
+}
+
+const contBotonesBanda = document.getElementById('botones-banda');
+bandas.forEach(b=>{
+  const btn = document.createElement('button');
+  btn.className='chip';
+  btn.textContent = b.nombre;
+  btn.addEventListener('click', ()=>{
+    bandaActiva = b.id;
+    document.querySelectorAll('#botones-banda .chip').forEach(c=>c.classList.remove('activo'));
+    btn.classList.add('activo');
+    document.getElementById('descripcion-banda').innerHTML =
+      `<b style="color:${b.color}">${b.nombre}</b> (${b.min}–${b.max} nm): ${b.uso}`;
+    dibujarBandas();
+  });
+  contBotonesBanda.appendChild(btn);
+});
+dibujarBandas();
+
+/* =======================================================================
+   3. REFLECTANCIA POR SUPERFICIE (TIERRA / MAR / VEGETACIÓN)
+   ======================================================================= */
+const superficies = {
+  vegetacion: {nombre:'Vegetación sana', azul:6, verde:12, rojo:5, nir:48,
+    txt:'La vegetación absorbe rojo y azul para fotosíntesis, refleja algo de verde (por eso se ve verde) y refleja muchísimo NIR — esta gran diferencia rojo/NIR es la base del NDVI.'},
+  suelo: {nombre:'Suelo urbano / desnudo', azul:18, verde:20, rojo:24, nir:28,
+    txt:'El concreto, asfalto y suelo desnudo reflejan de forma más pareja en todas las bandas — por eso se ven en tonos grises/cafés sin un color dominante marcado.'},
+  agua: {nombre:'Agua (mar/lago)', azul:9, verde:5, rojo:2, nir:1,
+    txt:'El agua absorbe casi toda la energía, sobre todo en el infrarrojo cercano — por eso se ve oscura y es fácil distinguirla usando la banda NIR.'}
+};
+const cvSuperficie = document.getElementById('canvas-superficie');
+const ctxSuperficie = cvSuperficie.getContext('2d');
+let superficieActiva = 'vegetacion';
+
+function dibujarSuperficie(){
+  const s = superficies[superficieActiva];
+  const w = cvSuperficie.width, h = cvSuperficie.height;
+  ctxSuperficie.clearRect(0,0,w,h);
+  const bandasS = [['Azul',s.azul,'#4fa8ff'],['Verde',s.verde,'#59d98a'],['Rojo',s.rojo,'#ff6b5c'],['NIR',s.nir,'#c34fe0']];
+  const barW = w/bandasS.length;
+  const maxAlto = h-50;
+  bandasS.forEach((b,i)=>{
+    const [nombre, valor, color] = b;
+    const altoBarra = (valor/60)*maxAlto;
+    const x = i*barW + barW*0.2;
+    const bw = barW*0.6;
+    ctxSuperficie.fillStyle = color;
+    ctxSuperficie.fillRect(x, h-30-altoBarra, bw, altoBarra);
+    ctxSuperficie.fillStyle = '#e8ecf4';
+    ctxSuperficie.font='11px IBM Plex Mono, monospace';
+    ctxSuperficie.textAlign='center';
+    ctxSuperficie.fillText(nombre, x+bw/2, h-12);
+    ctxSuperficie.fillText(valor+'%', x+bw/2, h-34-altoBarra);
+  });
+  ctxSuperficie.textAlign='left';
+
+  document.getElementById('muestra-superficie').style.background =
+    `rgb(${Math.min(255,s.rojo*4)},${Math.min(255,s.verde*4)},${Math.min(255,s.azul*4)})`;
+  document.getElementById('rgb-superficie').textContent =
+    `R:${Math.min(255,s.rojo*4)} G:${Math.min(255,s.verde*4)} B:${Math.min(255,s.azul*4)}`;
+  document.getElementById('texto-superficie').innerHTML = `<b>${s.nombre}</b>. ${s.txt}`;
+
+  const tabla = document.getElementById('tabla-superficie');
+  tabla.innerHTML = `<tr><th>Banda</th><th>% reflejado</th></tr>` +
+    bandasS.map(b=>`<tr><td>${b[0]}</td><td>${b[1]}%</td></tr>`).join('');
+}
+const contBotonesSuperficie = document.getElementById('botones-superficie');
+Object.keys(superficies).forEach(key=>{
+  const btn=document.createElement('button');
+  btn.className='chip'+(key===superficieActiva?' activo':'');
+  btn.textContent = superficies[key].nombre;
+  btn.addEventListener('click', ()=>{
+    superficieActiva = key;
+    document.querySelectorAll('#botones-superficie .chip').forEach(c=>c.classList.remove('activo'));
+    btn.classList.add('activo');
+    dibujarSuperficie();
+  });
+  contBotonesSuperficie.appendChild(btn);
+});
+dibujarSuperficie();
+
+/* =======================================================================
+   4. REFLECTANCIA E INTERFERENCIA ATMOSFÉRICA
+   ======================================================================= */
+const rangoAtmosfera = document.getElementById('rango-atmosfera');
+const valorAtmosfera = document.getElementById('valor-atmosfera');
+const cvAtmosfera = document.getElementById('canvas-atmosfera');
+const ctxAtmosfera = cvAtmosfera.getContext('2d');
+const muestraReal = document.getElementById('muestra-real');
+const muestraPercibida = document.getElementById('muestra-percibida');
+
+const colorRealSuperficie = [40,160,90]; // verde vegetación como referencia
+
+function dibujarAtmosfera(pct){
+  const w = cvAtmosfera.width, h = cvAtmosfera.height;
+  ctxAtmosfera.clearRect(0,0,w,h);
+  // cielo/espacio
+  const grad = ctxAtmosfera.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,'#050810');
+  grad.addColorStop(1,'#0d1626');
+  ctxAtmosfera.fillStyle = grad;
+  ctxAtmosfera.fillRect(0,0,w,h);
+
+  // franja de atmósfera
+  const atmY1 = h*0.35, atmY2 = h*0.66;
+  ctxAtmosfera.fillStyle = `rgba(180,200,255,${0.05+pct/100*0.28})`;
+  ctxAtmosfera.fillRect(0, atmY1, w, atmY2-atmY1);
+
+  // sol
+  ctxAtmosfera.fillStyle = '#ffe08a';
+  ctxAtmosfera.beginPath(); ctxAtmosfera.arc(40,30,16,0,Math.PI*2); ctxAtmosfera.fill();
+
+  // satelite
+  ctxAtmosfera.fillStyle = '#e8ecf4';
+  ctxAtmosfera.fillRect(w-70,20,26,14);
+  ctxAtmosfera.fillStyle = '#4fd8c4';
+  ctxAtmosfera.fillRect(w-78,24,8,6);
+  ctxAtmosfera.fillRect(w-38,24,8,6);
+
+  // suelo
+  ctxAtmosfera.fillStyle = '#1a2e1e';
+  ctxAtmosfera.fillRect(0,h-24,w,24);
+
+  // rayo sol->suelo
+  ctxAtmosfera.strokeStyle = '#ffe08a';
+  ctxAtmosfera.lineWidth = 2;
+  ctxAtmosfera.beginPath();
+  ctxAtmosfera.moveTo(40,46);
+  ctxAtmosfera.lineTo(w*0.42, h-24);
+  ctxAtmosfera.stroke();
+
+  // rayo suelo->satelite
+  ctxAtmosfera.strokeStyle = '#8fe0c9';
+  ctxAtmosfera.beginPath();
+  ctxAtmosfera.moveTo(w*0.42, h-24);
+  ctxAtmosfera.lineTo(w-58,34);
+  ctxAtmosfera.stroke();
+
+  // dispersión: puntos aleatorios en la franja atmosférica, proporcional a pct
+  const nPuntos = Math.round(pct*1.1);
+  ctxAtmosfera.fillStyle = 'rgba(220,230,255,0.8)';
+  for(let i=0;i<nPuntos;i++){
+    const x = Math.random()*w;
+    const y = atmY1 + Math.random()*(atmY2-atmY1);
+    ctxAtmosfera.beginPath();
+    ctxAtmosfera.arc(x,y,1.6,0,Math.PI*2);
+    ctxAtmosfera.fill();
+  }
+  ctxAtmosfera.fillStyle = '#66738f';
+  ctxAtmosfera.font = '11px IBM Plex Mono, monospace';
+  ctxAtmosfera.fillText('atmósfera (dispersión de aerosoles)', 10, atmY1-6);
+}
+
+function actualizarAtmosfera(){
+  const pct = parseFloat(rangoAtmosfera.value);
+  valorAtmosfera.textContent = pct;
+  dibujarAtmosfera(pct);
+  muestraReal.style.background = rgbCss(colorRealSuperficie);
+  // simular neblina: mezclar con blanco/azul claro segun pct, y perder saturación
+  const haze = [210,220,235];
+  const alpha = pct/100*0.65;
+  const mezclado = colorRealSuperficie.map((c,i)=> Math.round(c*(1-alpha) + haze[i]*alpha));
+  muestraPercibida.style.background = rgbCss(mezclado);
+}
+rangoAtmosfera.addEventListener('input', actualizarAtmosfera);
+actualizarAtmosfera();
+
+/* =======================================================================
+   ESCENA SINTÉTICA COMPARTIDA (usada en resolución y píxel mixto)
+   ======================================================================= */
+function dibujarEscenaBase(ctx, w, h){
+  // rio diagonal
+  ctx.fillStyle = '#2e6fa8';
+  ctx.beginPath();
+  ctx.moveTo(0,h*0.15); ctx.lineTo(w*0.25,0); ctx.lineTo(w*0.45,0);
+  ctx.lineTo(w*0.2,h*0.4); ctx.lineTo(0,h*0.4); ctx.closePath(); ctx.fill();
+
+  // bosque (verde oscuro, esquina inferior izquierda)
+  ctx.fillStyle = '#1d4b2a';
+  ctx.fillRect(0,h*0.55,w*0.42,h*0.45);
+  // textura de copas
+  ctx.fillStyle = '#2f6d3f';
+  for(let i=0;i<160;i++){
+    const x = Math.random()*w*0.42;
+    const y = h*0.55 + Math.random()*h*0.45;
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+  }
+
+  // campo agricola (verde claro)
+  ctx.fillStyle = '#7ab648';
+  ctx.fillRect(w*0.45,h*0.62,w*0.3,h*0.38);
+
+  // zona urbana (cuadricula gris/cafe)
+  ctx.fillStyle = '#8a8378';
+  ctx.fillRect(w*0.5,0,w*0.5,h*0.6);
+  ctx.strokeStyle = '#5c574d';
+  ctx.lineWidth = 1;
+  for(let x=w*0.5; x<w; x+=w*0.045){
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h*0.6); ctx.stroke();
+  }
+  for(let y=0; y<h*0.6; y+=h*0.06){
+    ctx.beginPath(); ctx.moveTo(w*0.5,y); ctx.lineTo(w,y); ctx.stroke();
+  }
+  // techos de colores variados (edificios)
+  const coloresTecho = ['#b5522f','#c2c2c2','#9a6a3f','#b5522f','#7d8a99'];
+  for(let i=0;i<40;i++){
+    ctx.fillStyle = coloresTecho[i%coloresTecho.length];
+    const bx = w*0.5 + Math.random()*w*0.48;
+    const by = Math.random()*h*0.58;
+    ctx.fillRect(bx,by,w*0.03,h*0.03);
+  }
+}
+
+/* =======================================================================
+   5. RESOLUCIÓN ESPACIAL
+   ======================================================================= */
+const nivelesResolucion = [
+  {m:1, sensor:'similar a un dron', px:1, txt:'A 1 m de resolución puedes distinguir autos, techos individuales y árboles por separado.'},
+  {m:3, sensor:'similar a PlanetScope', px:2, txt:'A 3 m aún distingues manzanas, calles principales y parcelas agrícolas individuales.'},
+  {m:10, sensor:'similar a Sentinel-2', px:6, txt:'A 10 m ya no distingues autos ni casas individuales, pero sí manzanas, cultivos y cuerpos de agua medianos.'},
+  {m:30, sensor:'similar a Landsat', px:14, txt:'A 30 m un píxel puede cubrir varias manzanas o parcelas; útil para monitoreo de cambio de uso de suelo a nivel de barrio o valle.'},
+  {m:100, sensor:'resolución media', px:32, txt:'A 100 m distingues zonas urbanas de zonas rurales, pero se pierden los detalles internos.'},
+  {m:250, sensor:'similar a MODIS', px:70, txt:'A 250 m un solo píxel puede cubrir toda una colonia o un valle agrícola completo: ideal para monitoreo regional o global, no para detalle local.'},
+];
+const rangoResolucion = document.getElementById('rango-resolucion');
+const valorResolucion = document.getElementById('valor-resolucion');
+const sensorResolucion = document.getElementById('sensor-resolucion');
+const textoResolucion = document.getElementById('texto-resolucion');
+const cvResolucion = document.getElementById('canvas-resolucion');
+const ctxResolucion = cvResolucion.getContext('2d');
+
+// escena base pre-renderizada a alta resolución (offscreen)
+const escenaOffscreen = document.createElement('canvas');
+escenaOffscreen.width = 480; escenaOffscreen.height = 320;
+dibujarEscenaBase(escenaOffscreen.getContext('2d'), 480, 320);
+
+function actualizarResolucion(){
+  const nivel = nivelesResolucion[parseInt(rangoResolucion.value)];
+  valorResolucion.textContent = nivel.m + ' m';
+  sensorResolucion.textContent = nivel.sensor;
+  textoResolucion.textContent = nivel.txt;
+
+  const w = cvResolucion.width, h = cvResolucion.height;
+  // "pixelar": dibujar a un canvas pequeño y luego escalar sin suavizado
+  const pequeno = document.createElement('canvas');
+  const cols = Math.max(2, Math.round(w/(nivel.px*3)));
+  const rows = Math.max(2, Math.round(h/(nivel.px*3)));
+  pequeno.width = cols; pequeno.height = rows;
+  const ctxP = pequeno.getContext('2d');
+  ctxP.drawImage(escenaOffscreen, 0, 0, cols, rows);
+
+  ctxResolucion.imageSmoothingEnabled = false;
+  ctxResolucion.clearRect(0,0,w,h);
+  ctxResolucion.drawImage(pequeno, 0, 0, cols, rows, 0, 0, w, h);
+
+  // rejilla sutil
+  ctxResolucion.strokeStyle = 'rgba(0,0,0,0.15)';
+  const cellW = w/cols, cellH = h/rows;
+  if (cellW > 6){
+    for(let x=0;x<=cols;x++){ ctxResolucion.beginPath(); ctxResolucion.moveTo(x*cellW,0); ctxResolucion.lineTo(x*cellW,h); ctxResolucion.stroke(); }
+    for(let y=0;y<=rows;y++){ ctxResolucion.beginPath(); ctxResolucion.moveTo(0,y*cellH); ctxResolucion.lineTo(w,y*cellH); ctxResolucion.stroke(); }
+  }
+}
+rangoResolucion.addEventListener('input', actualizarResolucion);
+actualizarResolucion();
+
+/* =======================================================================
+   6. PROMEDIO EN UN PIXEL (MIXTO)
+   ======================================================================= */
+const cvMixto = document.getElementById('canvas-mixto');
+const ctxMixto = cvMixto.getContext('2d');
+dibujarEscenaBase(ctxMixto, cvMixto.width, cvMixto.height);
+
+const ubicaciones = {
+  rio:{x:60,y:70,nombre:'Río'},
+  bosque:{x:110,y:230,nombre:'Bosque'},
+  urbano:{x:340,y:110,nombre:'Zona urbana'},
+  borde:{x:190,y:210,nombre:'Borde bosque / campo'},
+};
+let ubicacionActiva = 'borde';
+let tamMixto = 40;
+
+// caja visual sobre el canvas
+const escenarioMixto = document.querySelector('#pixel-mixto .pixel-stage');
+let cajaMixta = document.createElement('div');
+cajaMixta.className = 'pixel-box';
+escenarioMixto.appendChild(cajaMixta);
+
+function posicionarCajaMixta(){
+  const rectCanvas = cvMixto.getBoundingClientRect();
+  const rectStage = escenarioMixto.getBoundingClientRect();
+  const escala = rectCanvas.width / cvMixto.width;
+  const u = ubicaciones[ubicacionActiva];
+  const left = (rectCanvas.left - rectStage.left) + (u.x - tamMixto/2)*escala;
+  const top = (rectCanvas.top - rectStage.top) + (u.y - tamMixto/2)*escala;
+  cajaMixta.style.left = left+'px';
+  cajaMixta.style.top = top+'px';
+  cajaMixta.style.width = (tamMixto*escala)+'px';
+  cajaMixta.style.height = (tamMixto*escala)+'px';
+}
+
+function calcularPromedioMixto(){
+  const u = ubicaciones[ubicacionActiva];
+  const half = tamMixto/2;
+  const x = Math.max(0, Math.round(u.x-half));
+  const y = Math.max(0, Math.round(u.y-half));
+  const ww = Math.min(cvMixto.width-x, tamMixto);
+  const hh = Math.min(cvMixto.height-y, tamMixto);
+  const data = ctxMixto.getImageData(x,y,ww,hh).data;
+  let r=0,g=0,b=0,n=0;
+  for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; n++; }
+  r=Math.round(r/n); g=Math.round(g/n); b=Math.round(b/n);
+  document.getElementById('muestra-mixto').style.background = `rgb(${r},${g},${b})`;
+  document.getElementById('rgb-mixto').textContent = `R:${r} G:${g} B:${b}`;
+  posicionarCajaMixta();
+}
+
+const contUbicacion = document.getElementById('botones-ubicacion');
+Object.keys(ubicaciones).forEach(key=>{
+  const btn=document.createElement('button');
+  btn.className='chip'+(key===ubicacionActiva?' activo':'');
+  btn.textContent = ubicaciones[key].nombre;
+  btn.addEventListener('click', ()=>{
+    ubicacionActiva = key;
+    document.querySelectorAll('#botones-ubicacion .chip').forEach(c=>c.classList.remove('activo'));
+    btn.classList.add('activo');
+    calcularPromedioMixto();
+  });
+  contUbicacion.appendChild(btn);
+});
+
+const rangoMixto = document.getElementById('rango-mixto');
+const valorMixto = document.getElementById('valor-mixto');
+rangoMixto.addEventListener('input', ()=>{
+  tamMixto = parseInt(rangoMixto.value);
+  valorMixto.textContent = tamMixto;
+  calcularPromedioMixto();
+});
+window.addEventListener('resize', posicionarCajaMixta);
+setTimeout(calcularPromedioMixto, 50);
+
+/* =======================================================================
+   7. CUANTIZACIÓN 255
+   ======================================================================= */
+const rangoBits = document.getElementById('rango-bits');
+const valorBits = document.getElementById('valor-bits');
+const nivelesBits = document.getElementById('niveles-bits');
+const cvCuant = document.getElementById('canvas-cuantizacion');
+const ctxCuant = cvCuant.getContext('2d');
+const rangoValor = document.getElementById('rango-valor');
+const valorCrudo = document.getElementById('valor-crudo');
+const decValor = document.getElementById('dec-valor');
+const binValor = document.getElementById('bin-valor');
+const normValor = document.getElementById('norm-valor');
+
+// escena en escala de grises reutilizando la escena base
+const escenaGrisOff = document.createElement('canvas');
+escenaGrisOff.width = 440; escenaGrisOff.height = 240;
+dibujarEscenaBase(escenaGrisOff.getContext('2d'), 440, 240);
+
+function dibujarCuantizacion(bits){
+  const niveles = Math.pow(2,bits);
+  const w = cvCuant.width, h = cvCuant.height;
+  const src = escenaGrisOff.getContext('2d').getImageData(0,0,w,h);
+  const dst = ctxCuant.createImageData(w,h);
+  const step = 255/(niveles-1);
+  for(let i=0;i<src.data.length;i+=4){
+    const gris = 0.299*src.data[i] + 0.587*src.data[i+1] + 0.114*src.data[i+2];
+    const cuantizado = Math.round(Math.round(gris/step)*step);
+    dst.data[i]=cuantizado; dst.data[i+1]=cuantizado; dst.data[i+2]=cuantizado; dst.data[i+3]=255;
+  }
+  ctxCuant.putImageData(dst,0,0);
+}
+function actualizarBits(){
+  const bits = parseInt(rangoBits.value);
+  valorBits.textContent = bits;
+  const niveles = Math.pow(2,bits);
+  nivelesBits.textContent = `${niveles} nivel${niveles===1?'':'es'} (0–${niveles-1})`;
+  dibujarCuantizacion(bits);
+}
+rangoBits.addEventListener('input', actualizarBits);
+actualizarBits();
+
+function actualizarValor(){
+  const v = parseInt(rangoValor.value);
+  valorCrudo.textContent = v;
+  decValor.textContent = v;
+  binValor.textContent = v.toString(2).padStart(8,'0');
+  normValor.textContent = (v/255).toFixed(2);
+}
+rangoValor.addEventListener('input', actualizarValor);
+actualizarValor();
+
+/* =======================================================================
+   HERO WebGL — satélite orbitando la Tierra, "escaneando" bandas
+   ======================================================================= */
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  let w = canvas.clientWidth, h = canvas.clientHeight || 460;
+
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(w,h,false);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 100);
+  camera.position.set(0,1.1,6.2);
+
+  // estrellas
+  const starGeo = new THREE.BufferGeometry();
+  const starCount = 900;
+  const starPos = new Float32Array(starCount*3);
+  for(let i=0;i<starCount;i++){
+    const r = 30+Math.random()*40;
+    const theta = Math.random()*Math.PI*2;
+    const phi = Math.acos((Math.random()*2)-1);
+    starPos[i*3] = r*Math.sin(phi)*Math.cos(theta);
+    starPos[i*3+1] = r*Math.sin(phi)*Math.sin(theta);
+    starPos[i*3+2] = r*Math.cos(phi);
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos,3));
+  const starMat = new THREE.PointsMaterial({color:0x9fb3d9, size:0.06});
+  scene.add(new THREE.Points(starGeo, starMat));
+
+  // textura procedural de la Tierra
+  function crearTexturaTierra(){
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#0e3f66';
+    ctx.fillRect(0,0,512,256);
+    const g = ctx.createLinearGradient(0,0,0,256);
+    g.addColorStop(0,'#124b78'); g.addColorStop(0.5,'#0e3f66'); g.addColorStop(1,'#0a2f4d');
+    ctx.fillStyle = g; ctx.fillRect(0,0,512,256);
+
+    function blob(cx,cy,rx,ry,color){
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      const puntos=10;
+      for(let i=0;i<=puntos;i++){
+        const ang = (i/puntos)*Math.PI*2;
+        const rr = 1+(Math.sin(ang*3+cx)*0.15);
+        const x = cx+Math.cos(ang)*rx*rr;
+        const y = cy+Math.sin(ang)*ry*rr;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.closePath(); ctx.fill();
+    }
+    const verdeCafe = ['#2f6b3a','#3d7a3f','#5a6b35','#4a7a4a'];
+    const continentes = [
+      [90,110,55,40],[140,80,30,50],[70,60,25,20],
+      [260,90,45,55],[300,60,20,18],
+      [370,100,60,45],[420,70,25,20],
+      [200,150,35,25],[330,170,50,30],
+      [440,180,40,25],
+    ];
+    continentes.forEach((cont,i)=>blob(cont[0],cont[1],cont[2],cont[3],verdeCafe[i%verdeCafe.length]));
+    // casquetes polares
+    ctx.fillStyle = '#dfeaf5';
+    ctx.fillRect(0,0,512,10);
+    ctx.fillRect(0,246,512,10);
+    return new THREE.CanvasTexture(c);
+  }
+
+  const earthGeo = new THREE.SphereGeometry(1.4, 48, 48);
+  const earthMat = new THREE.MeshPhongMaterial({map:crearTexturaTierra(), shininess:8});
+  const earth = new THREE.Mesh(earthGeo, earthMat);
+  scene.add(earth);
+
+  // atmosfera sutil
+  const atmGeo = new THREE.SphereGeometry(1.46, 48, 48);
+  const atmMat = new THREE.MeshBasicMaterial({color:0x4fd8c4, transparent:true, opacity:0.08, side:THREE.BackSide});
+  scene.add(new THREE.Mesh(atmGeo, atmMat));
+
+  // luz
+  scene.add(new THREE.AmbientLight(0x334466, 1.1));
+  const sol = new THREE.DirectionalLight(0xfff2d0, 1.4);
+  sol.position.set(5,3,4);
+  scene.add(sol);
+
+  // satélite: cuerpo + paneles
+  const satGroup = new THREE.Group();
+  const cuerpo = new THREE.Mesh(
+    new THREE.BoxGeometry(0.12,0.12,0.22),
+    new THREE.MeshPhongMaterial({color:0xe8ecf4})
+  );
+  satGroup.add(cuerpo);
+  const panelMat = new THREE.MeshPhongMaterial({color:0x2255aa, emissive:0x0a1a33});
+  const panelL = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.01,0.14), panelMat);
+  panelL.position.x = -0.28;
+  const panelR = panelL.clone(); panelR.position.x = 0.28;
+  satGroup.add(panelL, panelR);
+  scene.add(satGroup);
+
+  // haz de escaneo (línea del satélite a la superficie)
+  const beamMat = new THREE.LineBasicMaterial({color:0xffb13c, transparent:true, opacity:0.85});
+  const beamGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+  const beam = new THREE.Line(beamGeo, beamMat);
+  scene.add(beam);
+
+  const orbitRadio = 2.3;
+  let angulo = 0;
+
+  const bandaTelemetria = [
+    ['B02 AZUL','450–515 nm'],['B03 VERDE','525–600 nm'],['B04 ROJO','630–680 nm'],
+    ['B08 NIR','845–885 nm'],['B11 SWIR1','1560–1660 nm'],
+  ];
+  let idxBanda = 0;
+  const elBanda = document.getElementById('tm-banda');
+  const elLambda = document.getElementById('tm-lambda');
+  const elLatLon = document.getElementById('tm-latlon');
+
+  setInterval(()=>{
+    idxBanda = (idxBanda+1) % bandaTelemetria.length;
+    elBanda.textContent = bandaTelemetria[idxBanda][0];
+    elLambda.textContent = bandaTelemetria[idxBanda][1];
+  }, 1800);
+
+  function animar(){
+    requestAnimationFrame(animar);
+    angulo += 0.006;
+    earth.rotation.y += 0.0015;
+
+    satGroup.position.set(Math.cos(angulo)*orbitRadio, Math.sin(angulo*0.6)*0.5, Math.sin(angulo)*orbitRadio);
+    satGroup.lookAt(0,0,0);
+
+    // punto en superficie hacia donde apunta el satélite
+    const dirASuelo = new THREE.Vector3(0,0,0).sub(satGroup.position).normalize();
+    const puntoSuelo = dirASuelo.clone().multiplyScalar(1.42);
+    beam.geometry.setFromPoints([satGroup.position.clone(), puntoSuelo]);
+
+    // coordenadas falsas de telemetría a partir de la posición
+    const lat = (Math.sin(angulo*0.6)*90).toFixed(1);
+    const lon = (((angulo*40)%360)-180).toFixed(1);
+    elLatLon.textContent = `${lat}°, ${lon}°`;
+
+    renderer.render(scene, camera);
+  }
+  animar();
+
+  function ajustarTamano(){
+    w = canvas.clientWidth;
+    h = canvas.clientHeight || 460;
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w,h,false);
+  }
+  window.addEventListener('resize', ajustarTamano);
+  ajustarTamano();
+})();
+
+/* =======================================================================
+   QUIZ DE REPASO
+   ======================================================================= */
+const preguntas = [
+  {
+    q:'¿Qué rango aproximado de longitud de onda corresponde a la luz visible para el ojo humano?',
+    opciones:['10–100 nm','380–750 nm','1000–3000 nm','0.1–1 nm'],
+    correcta:1,
+    exp:'La luz visible va aproximadamente de 380 nm (violeta) a 750 nm (rojo).'
+  },
+  {
+    q:'¿Por qué la vegetación sana se ve muy brillante en la banda del infrarrojo cercano (NIR)?',
+    opciones:[
+      'Porque absorbe toda la luz roja y verde',
+      'Porque su estructura interna refleja fuertemente el NIR',
+      'Porque el NIR no puede atravesar la atmósfera',
+      'Porque el NIR solo detecta agua'
+    ],
+    correcta:1,
+    exp:'La estructura celular interna de las hojas sanas refleja mucho el infrarrojo cercano; esta es la base del índice NDVI.'
+  },
+  {
+    q:'Un sensor con resolución espacial de 250 m, comparado con uno de 10 m, ¿qué implica?',
+    opciones:[
+      'Cada píxel cubre un área de terreno mucho más pequeña',
+      'Cada píxel cubre un área de terreno mucho más grande, mezclando más superficies distintas',
+      'Ambos cubren exactamente la misma área',
+      'La resolución espacial no afecta el detalle visible'
+    ],
+    correcta:1,
+    exp:'A menor resolución espacial (píxeles más grandes), cada píxel integra el promedio de un área de terreno mayor.'
+  },
+  {
+    q:'¿Qué es un "píxel mixto"?',
+    opciones:[
+      'Un píxel dañado por error del sensor',
+      'Un píxel cuyo valor es el promedio de varias superficies distintas dentro de su área',
+      'Un píxel que combina dos bandas distintas',
+      'Un píxel fuera del área de estudio'
+    ],
+    correcta:1,
+    exp:'Cuando un píxel cubre, por ejemplo, parte de un bosque y parte de un río, el sensor registra el promedio de la energía reflejada por ambas superficies.'
+  },
+  {
+    q:'Con 8 bits, ¿cuántos niveles de intensidad se pueden representar?',
+    opciones:['8','100','256 (0 a 255)','1000'],
+    correcta:2,
+    exp:'2 elevado a la 8 = 256 niveles posibles, numerados de 0 a 255.'
+  },
+  {
+    q:'La "reflectancia" de una superficie se define como...',
+    opciones:[
+      'La cantidad total de energía solar que llega a la Tierra',
+      'La fracción de luz incidente que una superficie refleja de vuelta',
+      'La distancia entre el satélite y la superficie',
+      'El número de bandas que mide un sensor'
+    ],
+    correcta:1,
+    exp:'Reflectancia = proporción de la energía incidente que la superficie refleja, en lugar de absorber o transmitir.'
+  },
+  {
+    q:'¿Qué efecto tiene la interferencia atmosférica (aerosoles, vapor de agua) en la señal que recibe el satélite?',
+    opciones:[
+      'Ninguno, la atmósfera no afecta la medición',
+      'Aumenta artificialmente la resolución espacial',
+      'Dispersa y absorbe parte de la luz, "ensuciando" la señal real de la superficie',
+      'Solo afecta las bandas visibles, nunca el infrarrojo'
+    ],
+    correcta:2,
+    exp:'La dispersión y absorción atmosférica alteran la señal que llega al sensor, por lo que se aplica corrección atmosférica antes de analizar las imágenes.'
+  },
+  {
+    q:'¿Por qué el agua se ve oscura en casi todas las bandas satelitales, especialmente en NIR?',
+    opciones:[
+      'Porque el agua refleja toda la luz que recibe',
+      'Porque el agua absorbe la mayor parte de la energía incidente, sobre todo en el infrarrojo cercano',
+      'Porque los sensores no pueden medir sobre cuerpos de agua',
+      'Porque el agua tiene la misma firma espectral que la vegetación'
+    ],
+    correcta:1,
+    exp:'El agua absorbe la mayoría de la energía incidente y refleja muy poco, especialmente en NIR — por eso se distingue tan bien de la vegetación y el suelo.'
+  },
+];
+
+const listaQuiz = document.getElementById('lista-quiz');
+const elPuntaje = document.getElementById('puntaje');
+document.getElementById('total-preguntas').textContent = preguntas.length;
+let puntaje = 0;
+let respondidas = new Set();
+
+function renderQuiz(){
+  listaQuiz.innerHTML='';
+  puntaje = 0; respondidas.clear();
+  elPuntaje.textContent = puntaje;
+  preguntas.forEach((p, idx)=>{
+    const item = document.createElement('div');
+    item.className='quiz-item';
+    const h3 = document.createElement('h3');
+    h3.textContent = `${idx+1}. ${p.q}`;
+    item.appendChild(h3);
+    const opts = document.createElement('div');
+    opts.className='opciones';
+    const feedback = document.createElement('div');
+    feedback.className='feedback';
+
+    p.opciones.forEach((texto, oIdx)=>{
+      const b = document.createElement('button');
+      b.className='opcion';
+      b.textContent = texto;
+      b.addEventListener('click', ()=>{
+        if (respondidas.has(idx)) return;
+        respondidas.add(idx);
+        const botones = opts.querySelectorAll('.opcion');
+        botones.forEach((bt,i2)=>{
+          bt.disabled = true;
+          if (i2===p.correcta) bt.classList.add('correcta');
+        });
+        if (oIdx===p.correcta){
+          puntaje++;
+          feedback.textContent = '✓ Correcto. '+p.exp;
+          feedback.className='feedback ok';
+        } else {
+          b.classList.add('incorrecta');
+          feedback.textContent = '✗ '+p.exp;
+          feedback.className='feedback bad';
+        }
+        elPuntaje.textContent = puntaje;
+      });
+      opts.appendChild(b);
+    });
+    item.appendChild(opts);
+    item.appendChild(feedback);
+    listaQuiz.appendChild(item);
+  });
+}
+document.getElementById('btn-reiniciar').addEventListener('click', renderQuiz);
+renderQuiz();
+</script>
+</body>
+</html>
