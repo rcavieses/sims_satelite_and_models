@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Día 2 · Modelación y Juegos Serios — Satélites y Sims</title>
+<meta name="description" content="Presentación interactiva: modelos mentales, tipos de modelos matemáticos, cambio climático y el algoritmo humano.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fondo:#060a12;
+  --panel:#141c2e;
+  --panel2:#1a2340;
+  --borde:#2b3a5c;
+  --texto:#f4f6fb;
+  --texto-suave:#c4cddf;
+  --ambar:#fdd249;
+  --ambar-suave:rgba(253,210,73,.16);
+  --cian:#5ce0f0;
+  --cian-suave:rgba(92,224,240,.14);
+  --verde:#6ee7a0;
+  --rojo:#fca5a5;
+  --mono:'IBM Plex Mono',monospace;
+  --display:'Space Grotesk',sans-serif;
+  --cuerpo:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--fondo);
+  color:var(--texto);
+  font-family:var(--cuerpo);
+  overflow:hidden;
+}
+
+/* ---------- estructura de diapositivas ---------- */
+#deck{height:100%;position:relative}
+.slide{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  padding:64px min(7vw,90px) 84px;
+  opacity:0;visibility:hidden;transform:translateX(40px);
+  transition:opacity .45s ease,transform .45s ease,visibility .45s;
+  overflow-y:auto;
+}
+.slide.activa{opacity:1;visibility:visible;transform:translateX(0)}
+.slide.saliendo{transform:translateX(-40px)}
+@media (prefers-reduced-motion: reduce){
+  .slide{transition:opacity .2s;transform:none!important}
+}
+
+.eyebrow{
+  font-family:var(--mono);font-size:.78rem;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ambar);margin-bottom:14px;
+}
+.eyebrow .mod{color:var(--cian);margin-left:12px}
+h1{font-family:var(--display);font-size:clamp(2rem,5vw,3.6rem);line-height:1.08;font-weight:700}
+h2{font-family:var(--display);font-size:clamp(1.5rem,3.4vw,2.4rem);line-height:1.15;font-weight:600;margin-bottom:18px}
+h3{font-family:var(--display);font-size:1.05rem;font-weight:600;margin-bottom:6px}
+p.lede{font-size:clamp(1.05rem,1.8vw,1.3rem);color:var(--texto-suave);max-width:62ch;line-height:1.65}
+.slide p{line-height:1.65;font-size:.96rem}
+
+/* ---------- portada ---------- */
+#slide-1{justify-content:flex-end;padding-bottom:110px}
+#hero-canvas{position:absolute;inset:0;z-index:0}
+#slide-1 .contenido{position:relative;z-index:1;max-width:820px}
+#slide-1 .tagline{margin-top:16px;font-size:clamp(1rem,1.8vw,1.25rem);color:var(--texto-suave);max-width:58ch;line-height:1.6}
+#slide-1 .meta{margin-top:22px;font-family:var(--mono);font-size:.8rem;color:var(--cian);letter-spacing:.08em}
+.pista{
+  position:absolute;bottom:96px;right:min(7vw,90px);z-index:1;
+  font-family:var(--mono);font-size:.75rem;color:var(--texto-suave);
+  border:1px solid var(--borde);border-radius:8px;padding:8px 14px;background:rgba(8,12,22,.6)
+}
+kbd{font-family:var(--mono);background:var(--panel2);border:1px solid var(--borde);border-radius:4px;padding:1px 6px;font-size:.85em}
+
+/* ---------- tarjetas y layouts ---------- */
+.dos-col{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:start;margin-top:8px}
+.tres-col{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:20px}
+@media (max-width:900px){.dos-col,.tres-col{grid-template-columns:1fr}}
+.card{
+  background:var(--panel);border:1px solid var(--borde);border-radius:14px;
+  padding:20px 22px;
+}
+.card.acento{border-color:var(--ambar);background:linear-gradient(180deg,var(--ambar-suave),var(--panel))}
+.card.cian{border-color:var(--cian);background:linear-gradient(180deg,var(--cian-suave),var(--panel))}
+.card ul{margin:8px 0 0 18px;color:var(--texto-suave)}
+.card li{margin-bottom:7px;line-height:1.6;font-size:.94rem}
+.card li strong{color:var(--texto)}
+.etiqueta{
+  display:inline-block;font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--fondo);background:var(--ambar);
+  border-radius:5px;padding:3px 9px;margin-bottom:10px;font-weight:600
+}
+.etiqueta.cian{background:var(--cian)}
+.cita{
+  border-left:4px solid var(--ambar);padding:14px 22px;margin:22px 0;
+  background:var(--panel);border-radius:0 12px 12px 0;
+  font-family:var(--display);font-size:clamp(1.2rem,2.6vw,1.8rem);line-height:1.35
+}
+.cita .autor{display:block;margin-top:10px;font-family:var(--mono);font-size:.8rem;color:var(--texto-suave);letter-spacing:.08em}
+
+/* ---------- actividades ---------- */
+.actividad{
+  border:1px dashed var(--ambar);border-radius:16px;padding:22px 26px;
+  background:rgba(251,191,36,.05);margin-top:18px
+}
+.actividad h3{color:var(--ambar);display:flex;align-items:center;gap:10px}
+.pasos{counter-reset:paso;margin-top:12px;display:grid;gap:10px}
+.paso{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start}
+.paso::before{
+  counter-increment:paso;content:counter(paso);
+  font-family:var(--mono);font-weight:600;color:var(--fondo);
+  background:var(--cian);border-radius:50%;width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;font-size:.85rem
+}
+.paso p{color:var(--texto-suave);font-size:.95rem}
+.paso p strong{color:var(--texto)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{font-family:var(--mono);font-size:.75rem;border:1px solid var(--borde);border-radius:999px;padding:5px 12px;color:var(--texto-suave)}
+.chip.on{border-color:var(--ambar);color:var(--ambar)}
+
+/* ---------- módulos interactivos ---------- */
+.modulo{
+  background:var(--panel);border:1px solid var(--cian);border-radius:16px;
+  padding:18px;margin-top:16px
+}
+.modulo .cabecera{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.modulo .codigo{font-family:var(--mono);font-size:.72rem;color:var(--cian);letter-spacing:.14em}
+canvas.lienzo{width:100%;border-radius:10px;background:#060a13;display:block;touch-action:none}
+.controles{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.boton{
+  font-family:var(--mono);font-size:.82rem;font-weight:600;cursor:pointer;
+  background:var(--ambar);color:var(--fondo);border:none;border-radius:8px;padding:9px 16px;
+}
+.boton.secundario{background:transparent;color:var(--cian);border:1px solid var(--cian)}
+.boton:focus-visible{outline:2px solid var(--cian);outline-offset:2px}
+input[type=range]{accent-color:var(--ambar);width:200px}
+.lectura{font-family:var(--mono);font-size:.8rem;color:var(--texto-suave)}
+.lectura b{color:var(--ambar)}
+
+/* ---------- pipeline satelital ---------- */
+.pipeline{display:flex;align-items:stretch;gap:0;margin:24px 0;flex-wrap:wrap}
+.nodo-pipe{
+  flex:1;min-width:150px;background:var(--panel);border:1px solid var(--borde);
+  border-radius:12px;padding:16px;text-align:center;position:relative
+}
+.nodo-pipe .icono{font-size:1.9rem;margin-bottom:8px}
+.nodo-pipe h3{font-size:.95rem}
+.nodo-pipe p{font-size:.88rem;color:var(--texto-suave);margin-top:4px}
+.flecha-pipe{display:flex;align-items:center;padding:0 8px;color:var(--ambar);font-size:1.4rem;font-family:var(--mono)}
+@media (max-width:900px){.pipeline{flex-direction:column}.flecha-pipe{justify-content:center;transform:rotate(90deg);padding:4px 0}}
+
+/* ---------- roles actividad algoritmo ---------- */
+.roles-if{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.rol-if{
+  font-family:var(--mono);font-size:.82rem;font-weight:600;text-align:center;
+  padding:10px 6px;border-radius:10px;border:1px solid var(--borde);line-height:1.5
+}
+.rol-if.azul{border-color:#5c9cf0;background:rgba(92,156,240,.12);color:#8ec0ff}
+.rol-if.rojo{border-color:var(--rojo);background:rgba(252,165,165,.1);color:var(--rojo)}
+.rol-if.amarillo{border-color:var(--ambar);background:var(--ambar-suave);color:var(--ambar)}
+.rol-if.morado{border-color:#b08cf0;background:rgba(176,140,240,.1);color:#c9b0f8}
+@media (max-width:700px){.roles-if{grid-template-columns:repeat(2,1fr)}}
+.roles-tabla{display:grid;gap:5px;margin-top:10px}
+.rol-fila{
+  display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center;
+  font-size:.88rem;line-height:1.45;color:var(--texto-suave)
+}
+.rol-fila strong{color:var(--texto)}
+.rol-num{
+  font-family:var(--mono);font-weight:600;font-size:.78rem;color:var(--fondo);
+  background:var(--ambar);border-radius:50%;width:24px;height:24px;
+  display:flex;align-items:center;justify-content:center
+}
+
+.rol-num.for{background:var(--cian)}
+.rol-num.else{background:#b08cf0}
+
+/* ---------- diagrama de flujo ---------- */
+.diagrama-flow{width:100%;overflow-x:auto}
+.diagrama-flow svg{display:block;margin:0 auto;max-width:100%;height:auto}
+
+/* ---------- quiz ---------- */
+.quiz-p{background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:16px 18px;margin-top:14px}
+.quiz-p h3{font-size:1rem;font-family:var(--cuerpo);font-weight:600}
+.opciones{display:grid;gap:8px;margin-top:10px}
+.opcion{
+  text-align:left;font-family:var(--cuerpo);font-size:.95rem;cursor:pointer;
+  background:var(--panel2);color:var(--texto);border:1px solid var(--borde);
+  border-radius:8px;padding:10px 14px;transition:border-color .2s
+}
+.opcion:hover{border-color:var(--cian)}
+.opcion.correcta{border-color:var(--verde);background:rgba(74,222,128,.12)}
+.opcion.incorrecta{border-color:var(--rojo);background:rgba(248,113,113,.12)}
+.opcion:disabled{cursor:default}
+.explica{display:none;margin-top:10px;font-size:.85rem;color:var(--texto-suave);border-top:1px solid var(--borde);padding-top:10px}
+.explica.ver{display:block}
+
+/* ---------- navegación ---------- */
+#nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px min(7vw,90px);
+  background:linear-gradient(0deg,rgba(8,12,22,.95),rgba(8,12,22,0));
+}
+#puntos{display:flex;gap:8px}
+.punto{width:9px;height:9px;border-radius:50%;background:var(--borde);border:none;cursor:pointer;padding:0}
+.punto.activa{background:var(--ambar);transform:scale(1.25)}
+.punto:focus-visible{outline:2px solid var(--cian);outline-offset:2px}
+.nav-botones{display:flex;gap:10px}
+#contador{font-family:var(--mono);font-size:.75rem;color:var(--texto-suave)}
+#barra{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--ambar),var(--cian));z-index:11;transition:width .3s}
+
+.pie-slide{margin-top:auto;padding-top:18px;font-family:var(--mono);font-size:.72rem;color:var(--texto-suave);letter-spacing:.06em}
+a{color:var(--cian)}
+</style>
+</head>
+<body>
+
+<div id="barra" style="width:0%"></div>
+
+<div id="deck">
+
+<!-- ============ 1 · PORTADA ============ -->
+<section class="slide activa" id="slide-1" data-titulo="Portada">
+  <canvas id="hero-canvas" aria-hidden="true"></canvas>
+  <div class="contenido">
+    <div class="eyebrow">Día 2 · Sesión de la tarde · Sección 2</div>
+    <h1>Modelación y juegos serios:<br>del dibujo al futuro de tu ciudad</h1>
+    <p class="tagline">Esta mañana viste cómo cambia tu ciudad desde el espacio. Esta tarde vamos a construir el <strong>modelo mental</strong> que explica esos cambios — el primer paso hacia tu videojuego.</p>
+    <div class="meta">SATÉLITES Y SIMS · ACOMPAÑA AL NOTEBOOK 1 · 13:00–16:00</div>
+  </div>
+  <div class="pista">Navega con <kbd>←</kbd> <kbd>→</kbd> o desliza</div>
+</section>
+
+<!-- ============ 2 · QUÉ ES UN SISTEMA ============ -->
+<section class="slide" id="slide-2" data-titulo="¿Qué es un sistema?">
+  <div class="eyebrow">Concepto clave <span class="mod">CH-12</span></div>
+  <h2>¿Qué es un sistema?</h2>
+  <div class="dos-col">
+    <div>
+      <p class="lede">Un sistema es un conjunto de <strong style="color:var(--ambar)">elementos</strong> conectados por <strong style="color:var(--cian)">relaciones</strong>, que juntos hacen algo que ningún elemento puede hacer solo.</p>
+      <div class="tres-col" style="margin-top:22px">
+        <div class="card"><div class="etiqueta">Elementos</div><p style="font-size:.9rem;color:var(--texto-suave)">Las piezas: población, áreas verdes, tráfico, agua…</p></div>
+        <div class="card"><div class="etiqueta cian">Relaciones</div><p style="font-size:.9rem;color:var(--texto-suave)">Cómo una pieza afecta a otra: más casas → menos vegetación.</p></div>
+        <div class="card"><div class="etiqueta" style="background:var(--verde)">Propósito</div><p style="font-size:.9rem;color:var(--texto-suave)">Lo que el sistema "hace": una ciudad donde vive gente.</p></div>
+      </div>
+      <p style="margin-top:20px;color:var(--texto-suave)">👉 Prueba el módulo: los mismos puntos pueden ser <em>un montón</em>… o <em>un sistema</em>. La diferencia son las relaciones.</p>
+    </div>
+    <div class="modulo">
+      <div class="cabecera">
+        <span class="codigo">MÓDULO CH-12 · ¿MONTÓN O SISTEMA?</span>
+      </div>
+      <canvas class="lienzo" id="cv-sistema" height="340"></canvas>
+      <div class="controles">
+        <button class="boton" id="btn-conectar">Conectar relaciones</button>
+        <button class="boton secundario" id="btn-perturbar">⚡ Perturbar un elemento</button>
+        <span class="lectura" id="lect-sistema">Estado: <b>montón de elementos</b></span>
+      </div>
+    </div>
+  </div>
+  <div class="pie-slide">SATÉLITES Y SIMS · DÍA 2 · MODELACIÓN Y JUEGOS SERIOS</div>
+</section>
+
+<!-- ============ 3 · ACTIVIDAD PINTARRÓN ============ -->
+<section class="slide" id="slide-3" data-titulo="Actividad: modelo mental">
+  <div class="eyebrow">Actividad en grupo · 30 min</div>
+  <h2>🖊️ Actividad 1 — El modelo mental de tu ciudad</h2>
+  <p class="lede">Solo necesitan <strong>pintarrón y plumones de colores</strong>. Van a dibujar el sistema ecológico-urbano de su ciudad como un diagrama causal.</p>
+  <div class="dos-col">
+    <div class="actividad">
+      <h3>📋 Instrucciones</h3>
+      <div class="pasos">
+        <div class="paso"><p><strong>Lluvia de variables (5 min).</strong> En equipo, escriban en el pintarrón todas las variables de su ciudad que se les ocurran: población, áreas verdes, temperatura, tráfico, agua, empleo…</p></div>
+        <div class="paso"><p><strong>Elijan 6–8 variables (5 min).</strong> Enciérrenlas en un círculo. Menos es más: un buen modelo empieza simple.</p></div>
+        <div class="paso"><p><strong>Dibujen flechas (10 min).</strong> Una flecha de A hacia B significa "A afecta a B". Usen <span style="color:var(--verde)">verde (+)</span> si A aumenta B, y <span style="color:var(--rojo)">rojo (−)</span> si A disminuye B.</p></div>
+        <div class="paso"><p><strong>Busquen ciclos (5 min).</strong> ¿Encuentran un camino de flechas que regresa al punto de partida? ¡Eso es un <strong>ciclo de retroalimentación</strong>! Márquenlo con otro color.</p></div>
+        <div class="paso"><p><strong>Cuenten su historia (5 min).</strong> Cada equipo explica un ciclo de su diagrama en voz alta: "cuando crece X, pasa Y, y eso hace que…"</p></div>
+      </div>
+      <div class="chips">
+        <span class="chip on">🖍️ 3+ colores de plumón</span>
+        <span class="chip on">👥 Equipos de 3–4</span>
+        <span class="chip on">⏱️ 30 minutos</span>
+      </div>
+    </div>
+    <div>
+      <div class="card cian">
+        <div class="etiqueta cian">Ejemplo de arranque</div>
+        <p style="color:var(--texto-suave);font-size:.95rem;line-height:1.7">
+        <strong style="color:var(--texto)">Población</strong> —<span style="color:var(--verde)">(+)</span>→ <strong style="color:var(--texto)">Construcción</strong> —<span style="color:var(--rojo)">(−)</span>→ <strong style="color:var(--texto)">Áreas verdes</strong> —<span style="color:var(--rojo)">(−)</span>→ <strong style="color:var(--texto)">Temperatura</strong> —¿?→ <strong style="color:var(--texto)">Calidad de vida</strong> —¿?→ <strong style="color:var(--texto)">Población</strong></p>
+        <p style="margin-top:10px;font-size:.85rem;color:var(--texto-suave)">¿Qué signo llevan las flechas con "¿?"? ¿El ciclo completo se refuerza o se equilibra?</p>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>💡 Para el instructor</h3>
+        <ul>
+          <li>No corrijas los diagramas "incorrectos": pregunta <em>"¿qué evidencia verían en una imagen satelital si esto fuera cierto?"</em></li>
+          <li>Este diagrama del pintarrón es <strong>exactamente</strong> lo que van a formalizar en el Notebook 1 al terminar la presentación.</li>
+          <li>Tómenle foto al pintarrón: será la portada de su modelo.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="pie-slide">SATÉLITES Y SIMS · DÍA 2 · MODELACIÓN Y JUEGOS SERIOS</div>
+</section>
+
+<!-- ============ 4 · TIPOS DE MODELOS ============ -->
+<section class="slide" id="slide-4" data-titulo="Tipos de modelos">
+  <div class="eyebrow">Concepto clave</div>
+  <h2>Tipos de modelos matemáticos</h2>
+  <p class="lede">Un modelo matemático traduce tu dibujo del pintarrón a reglas y números. Se construye eligiendo qué simplificar — y hay varias formas de hacerlo:</p>
+  <div class="tres-col">
+    <div class="card">
+      <div class="etiqueta">Estático vs. dinámico</div>
+      <ul>
+        <li><strong>Estático:</strong> una foto. "¿Cuánta área verde hay hoy?"</li>
+        <li><strong>Dinámico:</strong> una película. "¿Cuánta habrá en 10 años si seguimos así?" ← el de nuestro juego</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="etiqueta">Determinista vs. estocástico</div>
+      <ul>
+        <li><strong>Determinista:</strong> mismas entradas → siempre el mismo resultado.</li>
+        <li><strong>Estocástico:</strong> incluye azar, como la lluvia de cada año. Se corre muchas veces.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="etiqueta">Continuo vs. discreto</div>
+      <ul>
+        <li><strong>Continuo:</strong> el tiempo fluye (ecuaciones diferenciales).</li>
+        <li><strong>Discreto:</strong> el tiempo avanza por turnos — como un videojuego: turno 1, turno 2… ← el nuestro</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card acento" style="margin-top:20px">
+    <h3>🎮 Nuestro juego será…</h3>
+    <p style="color:var(--texto-suave)">…un modelo <strong style="color:var(--texto)">dinámico</strong>, <strong style="color:var(--texto)">discreto</strong> (por turnos/años) y al principio <strong style="color:var(--texto)">determinista</strong> — para que puedan entender exactamente por qué pasa lo que pasa. Mañana lo programan en Python (Notebook 2).</p>
+  </div>
+  <div class="pie-slide">SATÉLITES Y SIMS · DÍA 2 · MODELACIÓN Y JUEGOS SERIOS</div>
+</section>
+
+<!-- ============ 5 · NINGÚN MODELO ES CORRECTO ============ -->
+<section class="slide" id="slide-5" data-titulo="Modelos útiles">
+  <div class="eyebrow">Concepto clave <span class="mod">CH-13</span></div>
+  <h2>Ningún modelo es correcto…</h2>
+  <div class="dos-col">
+    <div>
+      <div class="cita">"Todos los modelos están equivocados, pero algunos son útiles."
+        <span class="autor">— GEORGE BOX, ESTADÍSTICO (1976)</span>
+      </div>
+      <p style="color:var(--texto-suave);line-height:1.7">Un modelo es como un <strong style="color:var(--texto)">mapa</strong>: si tuviera todos los detalles de la realidad, sería tan grande como la ciudad misma — e inútil. Simplificar no es un error: <strong style="color:var(--texto)">es el objetivo</strong>.</p>
+      <ul style="margin:14px 0 0 18px;color:var(--texto-suave);line-height:1.8">
+        <li>Un modelo <strong style="color:var(--rojo)">demasiado simple</strong> ignora lo importante.</li>
+        <li>Un modelo <strong style="color:var(--rojo)">demasiado complejo</strong> memoriza el ruido y falla al predecir.</li>
+        <li>Buscamos el punto medio: <strong style="color:var(--verde)">suficientemente bueno para ser útil.</strong></li>
+      </ul>
+    </div>
+    <div class="modulo">
+      <div class="cabecera"><span class="codigo">MÓDULO CH-13 · AJUSTA TU MODELO</span></div>
+      <canvas class="lienzo" id="cv-ajuste" height="320"></canvas>
+      <div class="controles">
+        <label class="lectura" for="rng-grado">Complejidad:</label>
+        <input type="range" id="rng-grado" min="0" max="9" value="1" step="1" aria-label="Complejidad del modelo">
+        <span class="lectura" id="lect-ajuste"></span>
+      </div>
+      <div class="controles">
+        <button class="boton secundario" id="btn-nuevos">🛰️ Probar con datos nuevos</button>
+      </div>
+    </div>
+  </div>
+  <div class="pie-slide">SATÉLITES Y SIMS · DÍA 2 · MODELACIÓN Y JUEGOS SERIOS</div>
+</section>
+
+<!-- ============ 6 · MODELOS, CLIMA Y SATÉLITES ============ -->
+<section class="slide" id="slide-6" data-titulo="Clima y satélites">
+  <div class="eyebrow">Conexión con la mañana</div>
+  <h2>Modelos + satélites = entender el cambio climático</h2>
+  <p class="lede">Los reportes del IPCC, los pronósticos de sequía, los mapas de riesgo costero: <strong>todos salen de modelos alimentados con datos satelitales</strong>. Ustedes van a construir la versión escolar de ese mismo flujo:</p>
+  <div class="pipeline">
+    <div class="nodo-pipe"><div class="icono">🛰️</div><h3>Satélite observa</h3><p>Sentinel-2 mide la luz reflejada por tu ciudad (lo de esta mañana).</p></div>
+    <div class="flecha-pipe">→</div>
+    <div class="nodo-pipe"><div class="icono">🌿</div><h3>Datos → variables</h3><p>El NDVI convierte píxeles en una variable del modelo: "vegetación".</p></div>
+    <div class="flecha-pipe">→</div>
+    <div class="nodo-pipe" style="border-color:var(--ambar)"><div class="icono">🧠</div><h3>Modelo simula</h3><p>Tus reglas causales calculan cómo cambia el sistema año con año.</p></div>
+    <div class="flecha-pipe">→</div>
+    <div class="nodo-pipe"><div class="icono">🎮</div><h3>Escenarios</h3><p>"¿Y si construimos aquí?" El juego muestra las consecuencias.</p></div>
+    <div class="flecha-pipe">→</div>
+    <div class="nodo-pipe"><div class="icono">🏙️</div><h3>Decisiones</h3><p>Ciudades reales usan esto para planear ante el cambio climático.</p></div>
+  </div>
+  <div class="dos-col">
+    <div class="card cian">
+      <h3>🌡️ Ejemplos reales</h3>
+      <ul>
+        <li><strong>Islas de calor urbanas:</strong> satélites térmicos + modelos → dónde plantar árboles.</li>
+        <li><strong>Modelos climáticos globales:</strong> dividen la Tierra en celdas (¡píxeles gigantes!) y simulan por pasos de tiempo — igual que su juego.</li>
+        <li><strong>Vulnerabilidad costera:</strong> como los tableros de CEDO que verán en el curso.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🔁 El mismo patrón que su videojuego</h3>
+      <p style="color:var(--texto-suave)">Observar (satélite) → representar (variables) → simular (modelo) → explorar (escenarios). El NDVI real de su ciudad será la <strong style="color:var(--texto)">condición inicial</strong> de su juego el jueves (Notebook 5).</p>
+    </div>
+  </div>
+  <div class="pie-slide">SATÉLITES Y SIMS · DÍA 2 · MODELACIÓN Y JUEGOS SERIOS</div>
+</section>
+
+<!-- ============ 7 · ALGORITMO HUMANO ============ -->
+<section class="slide" id="slide-7" data-titulo="Actividad: algoritmo humano">
+  <div class="eyebrow">Actividad presencial · 20 min <span class="mod">CH-14</span></div>
+  <h2>🧍×10 Actividad 2 — El algoritmo humano</h2>
+  <p class="lede">Van a convertirse en un <strong>algoritmo de clasificación satelital</strong>. Fichas de colores sobre 1 m² son la "superficie". Cada persona es una función — incluido un <strong style="color:var(--cian)">FOR</strong> que repite el muestreo y un <strong style="color:var(--cian)">ELSE</strong> que atrapa lo que ningún IF clasifica.</p>
+  <div class="dos-col">
+    <div class="actividad">
+      <h3>📋 Preparación (3 min)</h3>
+      <div class="pasos">
+        <div class="paso"><p><strong>Dibujen en el pintarrón</strong> una cuadrícula 2×2 (4 píxeles) y una tabla de conteo acumulado: 🔵 🔴 🟡 🟣.</p></div>
+        <div class="paso"><p><strong>Repartan los 10 roles</strong> (ver tarjeta →). Mezclen ~40 fichas de los 4 colores.</p></div>
+      </div>
+      <h3 style="margin-top:16px">🔁 Cada ronda = 1 píxel (~4 min × 4 rondas)</h3>
+      <div class="pasos">
+        <div class="paso"><p>🎲 <strong>Lanzador</strong> esparce ~40 fichas mezcladas sobre 1 m².</p></div>
+        <div class="paso"><p>🔄 <strong>FOR</strong> dirige 3 iteraciones del muestreo. Grita: <em>"¡Muestreo 1!"</em>, <em>"¡Muestreo 2!"</em>, <em>"¡Muestreo 3!"</em>. En cada iteración, los dos Sensores toman fichas.</p></div>
+        <div class="paso"><p>🛰️ <strong>Sensor A</strong> y 🛰️ <strong>Sensor B</strong> toman <strong>3 fichas cada uno por muestreo</strong> (6 × 3 iteraciones = <strong>18 fichas</strong> en total). Solo cuando FOR lo indica.</p></div>
+        <div class="paso"><p>📝 <strong>Registrador</strong> va sumando las fichas en la tabla del pintarrón después de cada muestreo. Al final de las 3 iteraciones dicta los totales acumulados.</p></div>
+        <div class="paso"><p>Las <strong>4 funciones IF</strong> escuchan los totales y aplican su regla:</p></div>
+      </div>
+      <div class="roles-if">
+        <span class="rol-if azul">🔵 IF Azul<br>azules ≥ <strong>10</strong> → "¡Agua!"</span>
+        <span class="rol-if rojo">🔴 IF Rojo<br>rojas ≥ <strong>5</strong> → "¡Urbano!"</span>
+        <span class="rol-if amarillo">🟡 IF Amarillo<br>amarillas ≥ <strong>5</strong> → "¡Suelo!"</span>
+        <span class="rol-if morado">🟣 IF Morado<br>moradas ≥ <strong>3</strong> → "¡Vegetación!"</span>
+      </div>
+      <div class="pasos">
+        <div class="paso"><p>Si <strong>más de un IF</strong> gritó → gana el que tiene más fichas. Si <strong>ninguno</strong> gritó → ❓ <strong>ELSE</strong> anuncia: <em>"¡Mixto — sin clasificar!"</em> y pinta la celda gris.</p></div>
+        <div class="paso"><p>El ganador (o ELSE) pinta la celda correspondiente en la cuadrícula 2×2. Se recogen fichas y siguiente píxel.</p></div>
+      </div>
+      <div class="chips">
+        <span class="chip on">🎨 ~40 fichas × 4 colores</span>
+        <span class="chip on">👥 10 personas</span>
+        <span class="chip on">🖊️ Pintarrón + plumones</span>
+        <span class="chip on">⏱️ 20 min total</span>
+      </div>
+    </div>
+    <div>
+      <div class="card acento">
+        <h3>👥 Los 10 roles</h3>
+        <div class="roles-tabla">
+          <div class="rol-fila"><span class="rol-num">1</span> <strong>🎲 Lanzador</strong> — esparce y recoge fichas</div>
+          <div class="rol-fila"><span class="rol-num for">2</span> <strong>🔄 FOR</strong> — dirige 3 iteraciones de muestreo</div>
+          <div class="rol-fila"><span class="rol-num">3</span> <strong>🛰️ Sensor A</strong> — 3 fichas × 3 muestreos</div>
+          <div class="rol-fila"><span class="rol-num">4</span> <strong>🛰️ Sensor B</strong> — 3 fichas × 3 muestreos</div>
+          <div class="rol-fila"><span class="rol-num">5</span> <strong>📝 Registrador</strong> — acumula conteo en pintarrón</div>
+          <div class="rol-fila"><span class="rol-num">6</span> <strong>🔵 IF Azul</strong> — ≥ 10 → Agua</div>
+          <div class="rol-fila"><span class="rol-num">7</span> <strong>🔴 IF Rojo</strong> — ≥ 5 → Urbano</div>
+          <div class="rol-fila"><span class="rol-num">8</span> <strong>🟡 IF Amarillo</strong> — ≥ 5 → Suelo</div>
+          <div class="rol-fila"><span class="rol-num">9</span> <strong>🟣 IF Morado</strong> — ≥ 3 → Vegetación</div>
+          <div class="rol-fila"><span class="rol-num else">10</span> <strong>❓ ELSE</strong> — nadie gritó → "Mixto" + pinta</div>
+        </div>
+      </div>
+      <div class="card cian" style="margin-top:14px">
+        <h3>🐍 Así se ve en Python</h3>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--texto);line-height:1.6;margin:8px 0 0;white-space:pre-wrap"><span style="color:var(--cian)">for</span> i <span style="color:var(--cian)">in</span> range(3):        <span style="color:var(--texto-suave)"># FOR: 3 muestreos</span>
+    muestra += sensor(suelo) <span style="color:var(--texto-suave)"># Sensor A y B</span>
+
+<span style="color:var(--cian)">if</span> azules >= 10:          <span style="color:var(--texto-suave)"># IF Azul</span>
+    clase = <span style="color:var(--ambar)">"Agua"</span>
+<span style="color:var(--cian)">elif</span> rojas >= 5:           <span style="color:var(--texto-suave)"># IF Rojo</span>
+    clase = <span style="color:var(--ambar)">"Urbano"</span>
+<span style="color:var(--cian)">elif</span> amarillas >= 5:       <span style="color:var(--texto-suave)"># IF Amarillo</span>
+    clase = <span style="color:var(--ambar)">"Suelo"</span>
+<span style="color:var(--cian)">elif</span> moradas >= 3:        <span style="color:var(--texto-suave)"># IF Morado</span>
+    clase = <span style="color:var(--ambar)">"Vegetación"</span>
+<span style="color:var(--cian)">else</span>:                     <span style="color:var(--texto-suave)"># ELSE</span>
+    clase = <span style="color:var(--ambar)">"Mixto"</span></pre>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>💡 Para el instructor</h3>
+        <ul>
+          <li>Los umbrales desiguales (10, 5, 5, 3) son intencionales: imitan que clasificar agua necesita señal fuerte, pero vegetación se detecta con pocas firmas.</li>
+          <li>Pregunta al final: <em>"¿El ELSE se activó? ¿Qué tipo de superficie real sería 'Mixto'?"</em></li>
+          <li><em>"¿Qué pasaría si FOR hiciera 5 iteraciones en vez de 3?"</em> → más datos = mejor clasificación, pero más tiempo.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="pie-slide">SATÉLITES Y SIMS · DÍA 2 · MODELACIÓN Y JUEGOS SERIOS</div>
+</section>
+
+<!-- ============ 8 · DIAGRAMA DE FLUJO ============ -->
+<section class="slide" id="slide-8" data-titulo="Diagrama de flujo">
+  <div class="eyebrow">Referencia visual <span class="mod">CH-14</span></div>
+  <h2>📐 El algoritmo paso a paso</h2>
+  <p class="lede">Esto es exactamente lo que acaban de ejecutar como personas — y lo que Python hará por ustedes mañana.</p>
+  <div class="diagrama-flow" id="diagrama-flow"></div>
+  <div class="dos-col" style="margin-top:18px">
+    <div class="card">
+      <h3>🔑 Conceptos de programación que usaron</h3>
+      <ul>
+        <li><strong style="color:var(--cian)">for</strong> — repetir una acción N veces (3 muestreos).</li>
+        <li><strong style="color:var(--cian)">if / elif</strong> — evaluar condiciones en orden; la primera que se cumple gana.</li>
+        <li><strong style="color:var(--cian)">else</strong> — lo que pasa cuando ninguna condición se cumple.</li>
+        <li><strong>variable</strong> — el conteo acumulado de cada color (se actualiza en cada iteración).</li>
+        <li><strong>función</strong> — cada persona tenía una tarea aislada con entrada y salida.</li>
+      </ul>
+    </div>
+    <div class="card cian">
+      <h3>🛰️ En la clasificación satelital real…</h3>
+      <ul>
+        <li>El <strong style="color:var(--cian)">for</strong> recorre cada píxel de la imagen (millones de veces).</li>
+        <li>Los <strong style="color:var(--cian)">if</strong> comparan valores espectrales reales (NDVI, NDWI, reflectancia infrarroja).</li>
+        <li>El <strong style="color:var(--cian)">else</strong> captura los píxeles ambiguos — nubes, sombras, mezclas.</li>
+        <li>El resultado es un <strong>mapa temático</strong> exactamente como la cuadrícula que pintaron.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="pie-slide">SATÉLITES Y SIMS · DÍA 2 · MODELACIÓN Y JUEGOS SERIOS</div>
+</section>
+
+<!-- ============ 9 · CHECKPOINT ============ -->
+<section class="slide" id="slide-9" data-titulo="Checkpoint">
+  <div class="eyebrow">Checkpoint rápido</div>
+  <h2>✅ ¿Nos llevamos las ideas?</h2>
+  <div class="dos-col">
+    <div>
+      <div class="quiz-p" data-correcta="1">
+        <h3>1. ¿Qué convierte un "montón de cosas" en un sistema?</h3>
+        <div class="opciones">
+          <button class="opcion">Tener muchos elementos</button>
+          <button class="opcion">Las relaciones entre sus elementos</button>
+          <button class="opcion">Estar hecho de números</button>
+        </div>
+        <div class="explica">Sin relaciones no hay sistema: una perturbación en un elemento no afectaría a los demás.</div>
+      </div>
+      <div class="quiz-p" data-correcta="2">
+        <h3>2. "Todos los modelos están equivocados, pero algunos son útiles" significa que…</h3>
+        <div class="opciones">
+          <button class="opcion">No vale la pena modelar</button>
+          <button class="opcion">Hay que hacer el modelo más complejo posible</button>
+          <button class="opcion">Simplificar bien es el objetivo: buscamos utilidad, no perfección</button>
+        </div>
+        <div class="explica">Un modelo con todos los detalles sería tan complejo como la realidad — e igual de difícil de entender.</div>
+      </div>
+    </div>
+    <div>
+      <div class="quiz-p" data-correcta="0">
+        <h3>3. Nuestro videojuego será un modelo…</h3>
+        <div class="opciones">
+          <button class="opcion">Dinámico y discreto (avanza por turnos)</button>
+          <button class="opcion">Estático (una sola foto)</button>
+          <button class="opcion">Continuo (ecuaciones diferenciales)</button>
+        </div>
+        <div class="explica">Como los modelos climáticos, avanza por pasos de tiempo — pero por años/turnos jugables.</div>
+      </div>
+      <div class="quiz-p" data-correcta="2">
+        <h3>4. ¿Qué papel juega el NDVI satelital en su juego?</h3>
+        <div class="opciones">
+          <button class="opcion">Es el motor gráfico</button>
+          <button class="opcion">Decide quién gana</button>
+          <button class="opcion">Es la condición inicial real: el estado de la vegetación al empezar</button>
+        </div>
+        <div class="explica">Observar (satélite) → representar (variables) → simular (modelo) → explorar (escenarios).</div>
+      </div>
+    </div>
+  </div>
+  <div class="pie-slide">SATÉLITES Y SIMS · DÍA 2 · MODELACIÓN Y JUEGOS SERIOS</div>
+</section>
+
+<!-- ============ 10 · REPASO SATÉLITES Y URBANISMO ============ -->
+<section class="slide" id="slide-10" data-titulo="Repaso: satélites y urbanismo">
+  <div class="eyebrow">Repaso de la mañana + contexto urbano</div>
+  <h2>🧠 ¿Qué recuerdan del día 1 y la mañana?</h2>
+  <div class="dos-col">
+    <div>
+      <div class="quiz-p" data-correcta="1">
+        <h3>1. ¿Qué parte del espectro electromagnético usa Sentinel-2 para calcular el NDVI?</h3>
+        <div class="opciones">
+          <button class="opcion">Solo la luz visible (lo que ven nuestros ojos)</button>
+          <button class="opcion">Rojo visible + infrarrojo cercano (NIR)</button>
+          <button class="opcion">Rayos X</button>
+          <button class="opcion">Ondas de radio</button>
+        </div>
+        <div class="explica">El NDVI combina la banda roja (que la vegetación absorbe) con la infrarroja cercana (que la vegetación refleja mucho). Fórmula: (NIR − Rojo) / (NIR + Rojo).</div>
+      </div>
+      <div class="quiz-p" data-correcta="2">
+        <h3>2. ¿Qué hace SEDATU?</h3>
+        <div class="opciones">
+          <button class="opcion">Controla los satélites mexicanos</button>
+          <button class="opcion">Administra los parques nacionales</button>
+          <button class="opcion">Coordina políticas de ordenamiento territorial, desarrollo urbano y vivienda en México</button>
+          <button class="opcion">Diseña videojuegos educativos</button>
+        </div>
+        <div class="explica">La Secretaría de Desarrollo Agrario, Territorial y Urbano diseña, ejecuta y coordina las políticas públicas en materia de tenencia de la tierra, ordenamiento territorial y vivienda. Emite las NOM que regulan la planeación urbana municipal.</div>
+      </div>
+      <div class="quiz-p" data-correcta="0">
+        <h3>3. ¿Qué es un "hito" en urbanismo?</h3>
+        <div class="opciones">
+          <button class="opcion">Un elemento visual prominente del paisaje urbano que sirve como punto de referencia para orientarse (un monumento, una torre, una iglesia)</button>
+          <button class="opcion">Un tipo de pavimento usado en calles peatonales</button>
+          <button class="opcion">Una medida de densidad poblacional</button>
+        </div>
+        <div class="explica">Kevin Lynch, en "La imagen de la ciudad" (1960), definió 5 elementos de la imagen urbana: sendas, bordes, barrios, nodos e hitos. Un hito es un objeto físico distinguible que la gente usa para orientarse — como el Monumento a la Patria en Mérida o la Catedral en el centro.</div>
+      </div>
+    </div>
+    <div>
+      <div class="quiz-p" data-correcta="1">
+        <h3>4. ¿Cómo se llama el documento que regula la planeación urbana de Mérida?</h3>
+        <div class="opciones">
+          <button class="opcion">Plan Nacional de Desarrollo</button>
+          <button class="opcion">Programa Municipal de Desarrollo Urbano de Mérida (PMDUM)</button>
+          <button class="opcion">Ley General de Educación</button>
+        </div>
+        <div class="explica">El PMDUM fue aprobado por el Ayuntamiento de Mérida en 2017. Define la zonificación, usos de suelo, límites urbanos y políticas de crecimiento para la ciudad y sus 47 centros de población. Lo elabora el IMPLAN Mérida.</div>
+      </div>
+      <div class="quiz-p" data-correcta="2">
+        <h3>5. ¿Cuáles son los tres tipos principales de proyección cartográfica?</h3>
+        <div class="opciones">
+          <button class="opcion">Grande, mediana y pequeña</button>
+          <button class="opcion">Digital, analógica y mixta</button>
+          <button class="opcion">Cilíndrica, cónica y azimutal (plana)</button>
+        </div>
+        <div class="explica">Cada una se imagina como envolver la Tierra con una figura geométrica: un cilindro (Mercator, UTM), un cono (Lambert, Albers) o un plano tangente (estereográfica, ortográfica). Todas deforman algo — el truco es elegir cuál distorsión tolerar.</div>
+      </div>
+      <div class="quiz-p" data-correcta="0">
+        <h3>6. Un sensor satelital "multiespectral" captura imágenes en…</h3>
+        <div class="opciones">
+          <button class="opcion">Varias bandas del espectro a la vez (visible, infrarrojo, etc.)</button>
+          <button class="opcion">Una sola foto a color, como un celular</button>
+          <button class="opcion">Solo en blanco y negro</button>
+        </div>
+        <div class="explica">Sentinel-2 tiene 13 bandas espectrales — cada una "ve" una parte distinta del espectro. Combinándolas podemos distinguir vegetación, agua, suelo y construcciones, que a simple vista podrían confundirse.</div>
+      </div>
+    </div>
+  </div>
+  <div class="pie-slide">SATÉLITES Y SIMS · DÍA 2 · MODELACIÓN Y JUEGOS SERIOS</div>
+</section>
+
+<!-- ============ 11 · CIERRE ============ -->
+<section class="slide" id="slide-11" data-titulo="Siguiente paso">
+  <div class="eyebrow">Siguiente paso</div>
+  <h2>📓 Ahora: Notebook 1 — Formalización del modelo mental</h2>
+  <p class="lede">Tomen la foto de su pintarrón. En el Notebook 1 van a convertir ese diagrama en variables con rangos, relaciones con signos y ciclos de retroalimentación — listos para programar la simulación mañana.</p>
+  <div class="tres-col">
+    <div class="card"><h3>Hoy hicieron</h3><ul><li>Modelo mental en el pintarrón</li><li>Su primer algoritmo… humano</li><li>Distinguir tipos de modelos</li></ul></div>
+    <div class="card acento"><h3>Ahora mismo</h3><ul><li>Abrir el Notebook 1 en Colab</li><li>Variables + rangos + relaciones</li><li>Documentar los ciclos que encontraron</li></ul></div>
+    <div class="card"><h3>Mañana (Día 3)</h3><ul><li>Notebook 2: la clase <code style="font-family:var(--mono);color:var(--cian)">EcosistemaUrbano</code></li><li>Su cadena humana… en Python</li><li>Prototipo del videojuego</li></ul></div>
+  </div>
+  <div class="controles" style="margin-top:26px">
+    <a class="boton" href="https://colab.research.google.com/drive/1mypeAX8ECa4wprRZEPEoFcqTh9JvcA9G" style="text-decoration:none;display:inline-block">Abrir Notebook 1 en Colab →</a>
+    <a class="boton secundario" href="index.html" style="text-decoration:none;display:inline-block">← Volver al sitio del curso</a>
+  </div>
+  <div class="pie-slide">SATÉLITES Y SIMS · DÍA 2 · MODELACIÓN Y JUEGOS SERIOS</div>
+</section>
+
+</div>
+
+<!-- ============ NAVEGACIÓN ============ -->
+<nav id="nav" aria-label="Navegación de diapositivas">
+  <span id="contador">1 / 9</span>
+  <div id="puntos" role="tablist"></div>
+  <div class="nav-botones">
+    <button class="boton secundario" id="btn-prev" aria-label="Diapositiva anterior">←</button>
+    <button class="boton" id="btn-next" aria-label="Diapositiva siguiente">→</button>
+  </div>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+/* =========================================================
+   NAVEGACIÓN DEL DECK (teclado, botones, swipe, hash)
+========================================================= */
+const slides = Array.from(document.querySelectorAll('.slide'));
+const puntosCont = document.getElementById('puntos');
+const contador = document.getElementById('contador');
+const barra = document.getElementById('barra');
+let actual = 0;
+
+slides.forEach((s, i) => {
+  const b = document.createElement('button');
+  b.className = 'punto';
+  b.setAttribute('aria-label', 'Ir a: ' + s.dataset.titulo);
+  b.addEventListener('click', () => irA(i));
+  puntosCont.appendChild(b);
+});
+const puntos = Array.from(puntosCont.children);
+
+function irA(n){
+  n = Math.max(0, Math.min(slides.length - 1, n));
+  if(n === actual) { pintar(); return; }
+  slides[actual].classList.add('saliendo');
+  slides[actual].classList.remove('activa');
+  const prev = actual;
+  actual = n;
+  slides[actual].classList.remove('saliendo');
+  slides[actual].classList.add('activa');
+  setTimeout(() => slides[prev].classList.remove('saliendo'), 500);
+  try{ history.replaceState(null, '', '#slide-' + (actual + 1)); }catch(e){}
+  pintar();
+}
+function pintar(){
+  contador.textContent = (actual + 1) + ' / ' + slides.length;
+  puntos.forEach((p, i) => p.classList.toggle('activa', i === actual));
+  barra.style.width = ((actual + 1) / slides.length * 100) + '%';
+}
+document.getElementById('btn-prev').addEventListener('click', () => irA(actual - 1));
+document.getElementById('btn-next').addEventListener('click', () => irA(actual + 1));
+document.addEventListener('keydown', e => {
+  if(e.target.tagName === 'INPUT') return;
+  if(e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); irA(actual + 1); }
+  if(e.key === 'ArrowLeft'  || e.key === 'PageUp') { e.preventDefault(); irA(actual - 1); }
+  if(e.key === 'Home') irA(0);
+  if(e.key === 'End') irA(slides.length - 1);
+});
+let tX = null;
+document.addEventListener('touchstart', e => { tX = e.touches[0].clientX; }, {passive:true});
+document.addEventListener('touchend', e => {
+  if(tX === null) return;
+  const dx = e.changedTouches[0].clientX - tX;
+  if(Math.abs(dx) > 60) irA(actual + (dx < 0 ? 1 : -1));
+  tX = null;
+}, {passive:true});
+// hash inicial (los estudiantes pueden seguir con #slide-N)
+const hash = parseInt((location.hash.match(/slide-(\d+)/) || [])[1], 10);
+if(hash && hash >= 1 && hash <= slides.length){ 
+  slides[0].classList.remove('activa'); actual = hash - 1; 
+  slides[actual].classList.add('activa');
+}
+pintar();
+
+/* =========================================================
+   HERO WEBGL — red causal 3D (Three.js)
+========================================================= */
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  if(!window.THREE || !canvas) return;
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true}); }
+  catch(e){ canvas.style.display = 'none'; return; }
+  const escena = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
+  cam.position.set(0, 0, 14);
+  const grupo = new THREE.Group();
+  escena.add(grupo);
+
+  // nodos de la red
+  const N = 26, nodos = [];
+  const geoNodo = new THREE.SphereGeometry(0.16, 16, 16);
+  for(let i = 0; i < N; i++){
+    const esAmbar = i % 3 === 0;
+    const mat = new THREE.MeshBasicMaterial({color: esAmbar ? 0xfdd249 : 0x5ce0f0});
+    const m = new THREE.Mesh(geoNodo, mat);
+    const r = 4.2 + Math.random() * 2.6;
+    const th = Math.random() * Math.PI * 2;
+    const ph = Math.acos(2 * Math.random() - 1);
+    m.position.set(r * Math.sin(ph) * Math.cos(th), r * Math.sin(ph) * Math.sin(th) * 0.62, r * Math.cos(ph));
+    m.userData.f = 0.4 + Math.random() * 0.8;
+    m.userData.p0 = m.position.clone();
+    grupo.add(m); nodos.push(m);
+  }
+  // aristas: conectar vecinos cercanos
+  const matLinea = new THREE.LineBasicMaterial({color: 0x35497a, transparent:true, opacity:0.7});
+  const pares = [];
+  for(let i = 0; i < N; i++) for(let j = i + 1; j < N; j++){
+    if(nodos[i].position.distanceTo(nodos[j].position) < 3.4) pares.push([i, j]);
+  }
+  const posLineas = new Float32Array(pares.length * 6);
+  const geoLineas = new THREE.BufferGeometry();
+  geoLineas.setAttribute('position', new THREE.BufferAttribute(posLineas, 3));
+  grupo.add(new THREE.LineSegments(geoLineas, matLinea));
+
+  // pulsos que viajan por las aristas
+  const NP = 14;
+  const geoPulso = new THREE.SphereGeometry(0.07, 8, 8);
+  const pulsos = [];
+  for(let k = 0; k < NP; k++){
+    const p = new THREE.Mesh(geoPulso, new THREE.MeshBasicMaterial({color: 0xfdd249}));
+    p.userData = {arista: (Math.random() * pares.length) | 0, t: Math.random(), v: 0.004 + Math.random() * 0.006};
+    grupo.add(p); pulsos.push(p);
+  }
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function tam(){
+    const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
+    renderer.setSize(w, h, false);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    cam.aspect = w / h; cam.updateProjectionMatrix();
+  }
+  addEventListener('resize', tam); tam();
+
+  let t = 0;
+  function animar(){
+    requestAnimationFrame(animar);
+    if(actual !== 0) return;           // solo animar en la portada
+    if(!reduceMotion){
+      t += 0.008;
+      grupo.rotation.y = t * 0.25;
+      nodos.forEach((n, i) => {
+        n.position.y = n.userData.p0.y + Math.sin(t * n.userData.f + i) * 0.18;
+      });
+      pulsos.forEach(p => {
+        p.userData.t += p.userData.v;
+        if(p.userData.t > 1){ p.userData.t = 0; p.userData.arista = (Math.random() * pares.length) | 0; }
+        const [a, b] = pares[p.userData.arista];
+        p.position.lerpVectors(nodos[a].position, nodos[b].position, p.userData.t);
+      });
+    }
+    for(let k = 0; k < pares.length; k++){
+      const [a, b] = pares[k];
+      posLineas.set([nodos[a].position.x, nodos[a].position.y, nodos[a].position.z,
+                     nodos[b].position.x, nodos[b].position.y, nodos[b].position.z], k * 6);
+    }
+    geoLineas.attributes.position.needsUpdate = true;
+    renderer.render(escena, cam);
+  }
+  animar();
+})();
+
+/* =========================================================
+   Utilidad canvas 2D nítido
+========================================================= */
+function prepCanvas(cv){
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = cv.clientWidth, h = parseInt(cv.getAttribute('height'), 10);
+  cv.width = w * dpr; cv.height = h * dpr;
+  cv.style.height = h + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return {ctx, w, h};
+}
+
+/* =========================================================
+   CH-12 · ¿Montón o sistema?
+========================================================= */
+(function(){
+  const cv = document.getElementById('cv-sistema');
+  if(!cv) return;
+  const nombres = ['Población','Áreas verdes','Construcción','Temperatura','Agua','Tráfico','Calidad de vida'];
+  let nodos = [], conectado = false, pulso = null, anim = null;
+
+  function colocar(w, h){
+    nodos = nombres.map((n, i) => {
+      const a = (i / nombres.length) * Math.PI * 2 - Math.PI / 2;
+      return {n, x: w/2 + Math.cos(a) * (w/2 - 78), y: h/2 + Math.sin(a) * (h/2 - 46), e: 0};
+    });
+  }
+  const aristas = [[0,2],[2,1],[1,3],[3,6],[6,0],[4,1],[5,3],[0,5],[4,6]];
+
+  function dibujar(){
+    const {ctx, w, h} = prepCanvas(cv);
+    if(!nodos.length || Math.abs(nodos[0].x0w - w) > 2){ colocar(w, h); nodos[0].x0w = w; }
+    ctx.clearRect(0, 0, w, h);
+    if(conectado){
+      aristas.forEach(([a, b]) => {
+        const A = nodos[a], B = nodos[b];
+        const energia = Math.max(A.e, B.e);
+        ctx.strokeStyle = energia > 0.05 ? 'rgba(251,191,36,' + (0.35 + energia * 0.65) + ')' : 'rgba(34,211,238,0.45)';
+        ctx.lineWidth = 1.5 + energia * 2.5;
+        ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+        // punta de flecha
+        const ang = Math.atan2(B.y - A.y, B.x - A.x);
+        const px = B.x - Math.cos(ang) * 34, py = B.y - Math.sin(ang) * 34;
+        ctx.fillStyle = 'rgba(34,211,238,0.8)';
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px - Math.cos(ang - 0.4) * 9, py - Math.sin(ang - 0.4) * 9);
+        ctx.lineTo(px - Math.cos(ang + 0.4) * 9, py - Math.sin(ang + 0.4) * 9);
+        ctx.fill();
+      });
+    }
+    nodos.forEach((nd, i) => {
+      const r = 24 + nd.e * 8;
+      ctx.beginPath(); ctx.arc(nd.x, nd.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = nd.e > 0.05 ? 'rgba(251,191,36,' + (0.25 + nd.e * 0.6) + ')' : '#1a2340';
+      ctx.fill();
+      ctx.strokeStyle = i % 2 ? '#5ce0f0' : '#fdd249'; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.fillStyle = '#f4f6fb'; ctx.font = '600 11px "IBM Plex Mono"';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const partes = nd.n.split(' ');
+      partes.forEach((p, k) => ctx.fillText(p, nd.x, nd.y + (k - (partes.length - 1) / 2) * 11));
+    });
+    if(!conectado){
+      ctx.fillStyle = '#c4cddf'; ctx.font = '12px Inter'; ctx.textAlign = 'center';
+      ctx.fillText('Elementos sueltos: si uno cambia, a los demás no les importa.', w / 2, h - 14);
+    }
+  }
+
+  document.getElementById('btn-conectar').addEventListener('click', function(){
+    conectado = !conectado;
+    this.textContent = conectado ? 'Desconectar relaciones' : 'Conectar relaciones';
+    document.getElementById('lect-sistema').innerHTML = 'Estado: <b>' + (conectado ? 'SISTEMA (elementos + relaciones)' : 'montón de elementos') + '</b>';
+    dibujar();
+  });
+  document.getElementById('btn-perturbar').addEventListener('click', () => {
+    nodos.forEach(n => n.e = 0);
+    nodos[0].e = 1; // perturbamos Población
+    if(anim) cancelAnimationFrame(anim);
+    let pasos = 0;
+    function paso(){
+      pasos++;
+      if(conectado && pasos % 22 === 0){
+        // propagar energía por aristas
+        const nueva = nodos.map(n => n.e * 0.55);
+        aristas.forEach(([a, b]) => {
+          nueva[b] = Math.min(1, nueva[b] + nodos[a].e * 0.5);
+          nueva[a] = Math.min(1, nueva[a] + nodos[b].e * 0.2);
+        });
+        nodos.forEach((n, i) => n.e = nueva[i]);
+      } else if(!conectado && pasos % 22 === 0){
+        nodos[0].e *= 0.6; // sin relaciones, la perturbación muere sola
+      }
+      dibujar();
+      if(pasos < 260) anim = requestAnimationFrame(paso);
+      else { nodos.forEach(n => n.e = 0); dibujar(); }
+    }
+    paso();
+  });
+  addEventListener('resize', dibujar);
+  if('IntersectionObserver' in window) new IntersectionObserver(es => es.forEach(e => e.isIntersecting && dibujar())).observe(cv);
+  dibujar();
+})();
+
+/* =========================================================
+   CH-13 · Ajusta tu modelo (sub/sobre-ajuste)
+========================================================= */
+(function(){
+  const cv = document.getElementById('cv-ajuste');
+  if(!cv) return;
+  const rng = document.getElementById('rng-grado');
+  const lect = document.getElementById('lect-ajuste');
+  // "verdad": curva suave tipo NDVI estacional + ruido
+  const verdad = x => 0.5 + 0.28 * Math.sin(x * 3.1) - 0.12 * x;
+  function genDatos(n, semilla){
+    let s = semilla;
+    const rand = () => { s = (s * 16807) % 2147483647; return (s / 2147483647) - 0.5; };
+    const pts = [];
+    for(let i = 0; i < n; i++){
+      const x = i / (n - 1);
+      pts.push({x, y: verdad(x) + rand() * 0.16});
+    }
+    return pts;
+  }
+  let entren = genDatos(12, 42), nuevos = null, semN = 7;
+
+  // ajuste polinomial por mínimos cuadrados (eliminación gaussiana)
+  function ajustar(pts, g){
+    const m = g + 1;
+    const A = Array.from({length: m}, () => new Array(m + 1).fill(0));
+    for(let r = 0; r < m; r++){
+      for(let c = 0; c < m; c++) A[r][c] = pts.reduce((s, p) => s + Math.pow(p.x, r + c), 0);
+      A[r][m] = pts.reduce((s, p) => s + p.y * Math.pow(p.x, r), 0);
+    }
+    for(let col = 0; col < m; col++){
+      let piv = col;
+      for(let r = col + 1; r < m; r++) if(Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv = r;
+      [A[col], A[piv]] = [A[piv], A[col]];
+      if(Math.abs(A[col][col]) < 1e-12) continue;
+      for(let r = 0; r < m; r++){
+        if(r === col) continue;
+        const f = A[r][col] / A[col][col];
+        for(let c = col; c <= m; c++) A[r][c] -= f * A[col][c];
+      }
+    }
+    return A.map((fila, i) => Math.abs(fila[i]) < 1e-12 ? 0 : fila[m] / fila[i]);
+  }
+  const evalPoli = (c, x) => c.reduce((s, ci, i) => s + ci * Math.pow(x, i), 0);
+  const error = (pts, c) => Math.sqrt(pts.reduce((s, p) => s + Math.pow(p.y - evalPoli(c, p.x), 2), 0) / pts.length);
+
+  function dibujar(){
+    const {ctx, w, h} = prepCanvas(cv);
+    const M = {l: 40, r: 16, t: 16, b: 30};
+    const X = x => M.l + x * (w - M.l - M.r);
+    const Y = y => h - M.b - (y) * (h - M.t - M.b) / 1.1;
+    ctx.clearRect(0, 0, w, h);
+    // ejes
+    ctx.strokeStyle = '#2b3a5c'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(M.l, M.t); ctx.lineTo(M.l, h - M.b); ctx.lineTo(w - M.r, h - M.b); ctx.stroke();
+    ctx.fillStyle = '#c4cddf'; ctx.font = '10px "IBM Plex Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText('tiempo →', w / 2, h - 8);
+    ctx.save(); ctx.translate(12, h / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('NDVI', 0, 0); ctx.restore();
+
+    const g = parseInt(rng.value, 10);
+    const c = ajustar(entren, g);
+    // curva del modelo
+    ctx.strokeStyle = '#fdd249'; ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    for(let i = 0; i <= 200; i++){
+      const x = i / 200, y = Math.max(-0.2, Math.min(1.3, evalPoli(c, x)));
+      i ? ctx.lineTo(X(x), Y(y)) : ctx.moveTo(X(x), Y(y));
+    }
+    ctx.stroke();
+    // datos de entrenamiento
+    entren.forEach(p => {
+      ctx.fillStyle = '#5ce0f0';
+      ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), 4.5, 0, Math.PI * 2); ctx.fill();
+    });
+    // datos nuevos
+    if(nuevos){
+      nuevos.forEach(p => {
+        ctx.strokeStyle = '#6ee7a0'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), 5, 0, Math.PI * 2); ctx.stroke();
+      });
+    }
+    // lecturas
+    const eE = error(entren, c);
+    let msg = 'Error con los datos: <b>' + eE.toFixed(3) + '</b>';
+    if(nuevos){
+      const eN = error(nuevos, c);
+      msg += ' · Error con datos nuevos: <b style="color:' + (eN > eE * 1.6 ? '#fca5a5' : '#6ee7a0') + '">' + eN.toFixed(3) + '</b>';
+    }
+    const juicio = g <= 0 ? ' — demasiado simple 😴' : (g >= 7 ? ' — ¡memorizó el ruido! 🤯' : (g >= 2 && g <= 4 ? ' — útil ✅' : ''));
+    lect.innerHTML = 'Grado ' + g + juicio + ' · ' + msg;
+  }
+  rng.addEventListener('input', dibujar);
+  document.getElementById('btn-nuevos').addEventListener('click', () => {
+    nuevos = genDatos(10, semN += 13);
+    dibujar();
+  });
+  addEventListener('resize', dibujar);
+  if('IntersectionObserver' in window) new IntersectionObserver(es => es.forEach(e => e.isIntersecting && dibujar())).observe(cv);
+  dibujar();
+})();
+
+/* =========================================================
+   CH-14 · Diagrama de flujo SVG
+========================================================= */
+(function(){
+  const cont = document.getElementById('diagrama-flow');
+  if(!cont) return;
+
+  // Construir SVG del flowchart
+  const W = 880, H = 520;
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns,'svg');
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  svg.setAttribute('xmlns',ns);
+  svg.style.width = '100%';
+  svg.style.maxHeight = '420px';
+
+  // defs: arrow marker
+  const defs = document.createElementNS(ns,'defs');
+  const marker = document.createElementNS(ns,'marker');
+  marker.setAttribute('id','arrow');
+  marker.setAttribute('viewBox','0 0 10 10');
+  marker.setAttribute('refX','10'); marker.setAttribute('refY','5');
+  marker.setAttribute('markerWidth','7'); marker.setAttribute('markerHeight','7');
+  marker.setAttribute('orient','auto-start-reverse');
+  const mp = document.createElementNS(ns,'path');
+  mp.setAttribute('d','M0,0 L10,5 L0,10 Z');
+  mp.setAttribute('fill','#5ce0f0');
+  marker.appendChild(mp);
+  defs.appendChild(marker);
+  svg.appendChild(defs);
+
+  function addRect(x,y,w,h,fill,stroke,rx){
+    const r = document.createElementNS(ns,'rect');
+    r.setAttribute('x',x); r.setAttribute('y',y);
+    r.setAttribute('width',w); r.setAttribute('height',h);
+    r.setAttribute('rx',rx||10);
+    r.setAttribute('fill',fill); r.setAttribute('stroke',stroke);
+    r.setAttribute('stroke-width','1.8');
+    svg.appendChild(r);
+  }
+  function addDiamond(cx,cy,rw,rh,fill,stroke){
+    const pts = [cx+','+( cy-rh), (cx+rw)+','+cy, cx+','+(cy+rh), (cx-rw)+','+cy].join(' ');
+    const p = document.createElementNS(ns,'polygon');
+    p.setAttribute('points',pts);
+    p.setAttribute('fill',fill); p.setAttribute('stroke',stroke);
+    p.setAttribute('stroke-width','1.8');
+    svg.appendChild(p);
+  }
+  function addText(x,y,text,size,color,anchor,weight){
+    const t = document.createElementNS(ns,'text');
+    t.setAttribute('x',x); t.setAttribute('y',y);
+    t.setAttribute('font-family','"IBM Plex Mono",monospace');
+    t.setAttribute('font-size',size||12);
+    t.setAttribute('fill',color||'#f4f6fb');
+    t.setAttribute('text-anchor',anchor||'middle');
+    t.setAttribute('font-weight',weight||'600');
+    t.textContent = text;
+    svg.appendChild(t);
+  }
+  function addLine(x1,y1,x2,y2,color){
+    const l = document.createElementNS(ns,'line');
+    l.setAttribute('x1',x1); l.setAttribute('y1',y1);
+    l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+    l.setAttribute('stroke',color||'#5ce0f0');
+    l.setAttribute('stroke-width','1.8');
+    l.setAttribute('marker-end','url(#arrow)');
+    svg.appendChild(l);
+  }
+  function addLineNoArrow(x1,y1,x2,y2,color){
+    const l = document.createElementNS(ns,'line');
+    l.setAttribute('x1',x1); l.setAttribute('y1',y1);
+    l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+    l.setAttribute('stroke',color||'#2b3a5c');
+    l.setAttribute('stroke-width','1.4');
+    svg.appendChild(l);
+  }
+
+  // --- Layout ---
+  // Row 0: Lanzador
+  addRect(355,10,170,44,'#1a2340','#fdd249'); 
+  addText(440,38,'🎲 Lanzar fichas',12.5,'#fdd249');
+
+  // Arrow down
+  addLine(440,54,440,78);
+
+  // Row 1: FOR loop box (big rounded rect)
+  addRect(120,82,640,160,'rgba(92,224,240,0.06)','#5ce0f0',14);
+  addText(150,102,'FOR i = 1..3',11,'#5ce0f0','start','600');
+
+  // Inside FOR: Sensor A + Sensor B -> Registrador
+  addRect(150,112,155,40,'#1a2340','#fdd249');
+  addText(227,137,'🛰️ Sensor A (3)',11,'#f4f6fb');
+
+  addRect(150,164,155,40,'#1a2340','#fdd249');
+  addText(227,189,'🛰️ Sensor B (3)',11,'#f4f6fb');
+
+  // Arrow sensors -> registrador
+  addLine(305,132,370,156);
+  addLine(305,184,370,166);
+
+  addRect(374,140,180,44,'#1a2340','#fdd249');
+  addText(464,167,'📝 Registrador: ∑',12,'#f4f6fb');
+
+  // Loop-back arrow (registrador -> back up conceptually)
+  addLineNoArrow(554,162,610,162,'#5ce0f0');
+  addLineNoArrow(610,162,610,98,'#5ce0f0');
+  const la = document.createElementNS(ns,'line');
+  la.setAttribute('x1',610); la.setAttribute('y1',98);
+  la.setAttribute('x2',560); la.setAttribute('y2',98);
+  la.setAttribute('stroke','#5ce0f0'); la.setAttribute('stroke-width','1.4');
+  la.setAttribute('marker-end','url(#arrow)');
+  svg.appendChild(la);
+  addText(636,134,'repite ×3',9.5,'#5ce0f0','start','500');
+
+  // Arrow down from FOR box
+  addLine(440,242,440,270);
+  addText(450,260,'totales',9.5,'#c4cddf','start','400');
+
+  // Row 2: IF diamonds — 4 in a row
+  const ifs = [
+    {cx:130,label:'azules≥10?',color:'#5c9cf0',yes:'Agua'},
+    {cx:325,label:'rojas≥5?',color:'#fca5a5',yes:'Urbano'},
+    {cx:520,label:'amarillas≥5?',color:'#fdd249',yes:'Suelo'},
+    {cx:715,label:'moradas≥3?',color:'#c9b0f8',yes:'Vegetación'}
+  ];
+  ifs.forEach((d,i) => {
+    addDiamond(d.cx,320,90,38,'rgba(26,35,64,0.9)',d.color);
+    addText(d.cx,324,d.label,10,d.color);
+    // "Sí" arrow down
+    addLine(d.cx,358,d.cx,396);
+    addText(d.cx+12,378,'sí',9,d.color,'start','500');
+    // Result box
+    addRect(d.cx-55,400,110,36,'#1a2340',d.color);
+    addText(d.cx,423,d.yes,12,d.color);
+    // "No" arrow right (except last)
+    if(i < ifs.length - 1){
+      addLine(d.cx+90,320,ifs[i+1].cx-90,320,'#c4cddf');
+      addText((d.cx+ifs[i+1].cx)/2,312,'no',9,'#c4cddf','middle','500');
+    }
+  });
+
+  // Last "No" → ELSE
+  addLine(715+90,320,830,320,'#c4cddf');
+  addText(790,312,'no',9,'#c4cddf','middle','500');
+  addRect(810,300,60,40,'#1a2340','#b08cf0',8);
+  addText(840,324,'ELSE',10.5,'#b08cf0');
+  addLine(840,340,840,396);
+  addRect(785,400,110,36,'#1a2340','#b08cf0');
+  addText(840,423,'Mixto',12,'#b08cf0');
+
+  // All results → Pintar
+  ifs.forEach(d => addLine(d.cx,436,d.cx,464,'#2b3a5c'));
+  addLine(840,436,840,464,'#2b3a5c');
+  addRect(290,468,380,40,'#1a2340','#6ee7a0');
+  addText(480,493,'📊  Pintar celda en cuadrícula 2×2',12.5,'#6ee7a0');
+
+  cont.appendChild(svg);
+})();
+
+/* =========================================================
+   Quiz
+========================================================= */
+document.querySelectorAll('.quiz-p').forEach(q => {
+  const correcta = parseInt(q.dataset.correcta, 10);
+  const ops = q.querySelectorAll('.opcion');
+  ops.forEach((op, i) => op.addEventListener('click', () => {
+    ops.forEach(o => o.disabled = true);
+    op.classList.add(i === correcta ? 'correcta' : 'incorrecta');
+    if(i !== correcta) ops[correcta].classList.add('correcta');
+    q.querySelector('.explica').classList.add('ver');
+  }));
+});
+</script>
+</body>
+</html>
