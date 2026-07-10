@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitácora de Sprint — Videojuego Serio | Satélites y Sims</title>
+<style>
+  :root{
+    --fondo:#0b0f1a;
+    --panel:#131a2b;
+    --panel-2:#1a2338;
+    --borde:#2a3550;
+    --texto:#e7ecf5;
+    --texto-suave:#b9c4d9;
+    --ambar:#f5a623;
+    --cian:#39c7d6;
+    --verde:#4ad991;
+    --rojo:#e8617a;
+    --mono:'IBM Plex Mono', 'Courier New', monospace;
+    --display:'Space Grotesk', 'Inter', sans-serif;
+    --cuerpo:'Inter', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--fondo); color:var(--texto);
+    font-family:var(--cuerpo); line-height:1.5;
+    background-image:
+      radial-gradient(circle at 15% 8%, rgba(57,199,214,0.10), transparent 40%),
+      radial-gradient(circle at 85% 92%, rgba(245,166,35,0.08), transparent 45%);
+  }
+  .wrap{max-width:920px; margin:0 auto; padding:0 22px;}
+
+  header.hero{padding:44px 0 28px; border-bottom:1px solid var(--borde);}
+  .eyebrow{
+    font-family:var(--mono); font-size:0.78rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--cian); margin-bottom:10px;
+  }
+  h1{font-family:var(--display); font-size:2.1rem; margin:0 0 10px; line-height:1.15;}
+  .tagline{color:var(--texto-suave); max-width:62ch; margin:0 0 22px; font-size:1rem;}
+
+  .campos-equipo{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
+  }
+  .campo{
+    background:var(--panel); border:1px solid var(--borde); border-radius:8px; padding:10px 12px;
+  }
+  .campo label{
+    display:block; font-family:var(--mono); font-size:0.68rem; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--texto-suave); margin-bottom:6px;
+  }
+  .campo input{
+    width:100%; background:transparent; border:none; border-bottom:1px dashed var(--borde);
+    color:var(--texto); font-family:var(--cuerpo); font-size:0.95rem; padding:4px 0;
+  }
+  .campo input:focus{outline:none; border-bottom-color:var(--cian);}
+
+  main{padding:34px 0 60px;}
+  section{margin-bottom:42px;}
+  h2{
+    font-family:var(--display); font-size:1.3rem; margin:0 0 6px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .subt{color:var(--texto-suave); font-size:0.92rem; margin:0 0 18px;}
+
+  /* Panel de progreso tipo HUD */
+  .hud-progreso{
+    background:var(--panel); border:1px solid var(--borde); border-radius:10px;
+    padding:16px 20px; display:flex; align-items:center; gap:18px; margin-bottom:30px;
+  }
+  .hud-progreso .etiqueta{font-family:var(--mono); font-size:0.78rem; color:var(--texto-suave); white-space:nowrap;}
+  .barra{flex:1; height:10px; background:var(--panel-2); border-radius:6px; overflow:hidden; border:1px solid var(--borde);}
+  .barra-rellena{height:100%; width:0%; background:linear-gradient(90deg,var(--cian),var(--ambar)); transition:width .3s ease;}
+  .hud-progreso .pct{font-family:var(--mono); font-weight:700; color:var(--ambar); min-width:3.2em; text-align:right;}
+
+  /* Requisitos no negociables */
+  .requisitos{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  @media (max-width:760px){ .requisitos{grid-template-columns:1fr;} .campos-equipo{grid-template-columns:1fr 1fr;} }
+
+  .panel-req{
+    position:relative; background:var(--panel); border:1px solid var(--borde); border-radius:10px;
+    padding:20px; overflow:hidden;
+  }
+  .panel-req::before{
+    content:""; position:absolute; top:0; left:0; width:100%; height:3px;
+  }
+  .panel-req.modelo::before{background:var(--cian);}
+  .panel-req.espacial::before{background:var(--ambar);}
+  .panel-req h3{
+    font-family:var(--display); font-size:1.05rem; margin:6px 0 4px; display:flex; gap:8px; align-items:center;
+  }
+  .panel-req .desc{color:var(--texto-suave); font-size:0.86rem; margin:0 0 14px;}
+  .lista-check{list-style:none; margin:0; padding:0;}
+  .lista-check li{
+    display:flex; gap:10px; align-items:flex-start; padding:7px 0; border-top:1px solid var(--borde);
+    font-size:0.9rem;
+  }
+  .lista-check li:first-child{border-top:none;}
+  .lista-check input[type=checkbox]{
+    margin-top:3px; width:16px; height:16px; accent-color:var(--verde); flex:none;
+  }
+  .etiqueta-opcional{
+    display:inline-block; font-family:var(--mono); font-size:0.62rem; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ambar); border:1px solid var(--ambar); border-radius:5px; padding:1px 6px; margin-right:6px; vertical-align:middle;
+  }
+
+  /* Rúbrica */
+  table{width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--borde); border-radius:10px; overflow:hidden;}
+  th,td{padding:10px 12px; text-align:left; font-size:0.88rem; border-bottom:1px solid var(--borde); vertical-align:top;}
+  th{font-family:var(--mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--cian); background:var(--panel-2);}
+  tr:last-child td{border-bottom:none;}
+  td.puntaje{text-align:center; font-family:var(--mono); width:60px;}
+  td.puntaje select{background:var(--panel-2); color:var(--texto); border:1px solid var(--borde); border-radius:6px; padding:4px 6px; font-family:var(--mono);}
+
+  /* Backlog por sesión */
+  .sesion{
+    background:var(--panel); border:1px solid var(--borde); border-radius:10px; padding:16px 18px; margin-bottom:14px;
+  }
+  .sesion .cabecera{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
+  .sesion .cuando{font-family:var(--mono); font-size:0.72rem; color:var(--ambar); text-transform:uppercase; letter-spacing:.05em;}
+  .sesion .meta{font-size:0.85rem; color:var(--texto-suave);}
+  .tareas{width:100%; border-collapse:collapse;}
+  .tareas th{background:transparent; border-bottom:1px solid var(--borde); font-size:0.68rem;}
+  .tareas td{border-bottom:1px dashed var(--borde); padding:8px 6px;}
+  .tareas input, .tareas textarea{
+    width:100%; background:transparent; border:none; color:var(--texto); font-family:var(--cuerpo); font-size:0.86rem; resize:vertical;
+  }
+  .tareas input:focus, .tareas textarea:focus{outline:none;}
+
+  /* Checkpoint instructor */
+  .checkpoint{
+    background:var(--panel-2); border:1px solid var(--borde); border-radius:10px; padding:20px;
+  }
+  .semaforo{display:flex; gap:14px; margin:14px 0;}
+  .semaforo label{
+    display:flex; align-items:center; gap:8px; font-size:0.9rem; padding:8px 14px;
+    border:1px solid var(--borde); border-radius:8px; cursor:pointer;
+  }
+  .semaforo input{accent-color:var(--verde);}
+  .checkpoint textarea{
+    width:100%; min-height:70px; background:var(--panel); border:1px solid var(--borde); border-radius:8px;
+    color:var(--texto); font-family:var(--cuerpo); padding:10px; font-size:0.9rem;
+  }
+
+  .boton{
+    display:inline-block; background:var(--ambar); color:#1a1200; font-weight:700; text-decoration:none;
+    padding:10px 18px; border-radius:8px; font-family:var(--mono); font-size:0.82rem; border:none; cursor:pointer;
+  }
+  .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;}
+  a.volver{color:var(--cian); text-decoration:none; font-family:var(--mono); font-size:0.82rem;}
+
+  footer{border-top:1px solid var(--borde); padding:24px 0; color:var(--texto-suave); font-size:0.82rem;}
+
+  @media print{
+    body{background:#fff; color:#000;}
+    .hud-progreso, .boton{display:none;}
+    .panel-req, .sesion, table, .checkpoint{background:#fff; border-color:#999;}
+    .eyebrow, th{color:#333;}
+    a{color:#000;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="eyebrow">Bitácora de sprint · Sección 2: Modelación y Gamificación</div>
+      <a class="volver" href="index.html">← Volver al inicio</a>
+    </div>
+    <h1>🚀 Bitácora de Sprint: Videojuego Serio</h1>
+    <p class="tagline">Un videojuego serio no es solo entretenimiento: por debajo tiene que correr un modelo matemático que simule el sistema real, y ese modelo tiene que arrancar con datos satelitales reales de tu ciudad. Esta bitácora es tu lista de despegue antes de avanzar de fase.</p>
+
+    <div class="campos-equipo">
+      <div class="campo"><label>Equipo</label><input type="text" placeholder="Nombre del equipo"></div>
+      <div class="campo"><label>Ciudad de estudio</label><input type="text" placeholder="Ej. La Paz, BCS"></div>
+      <div class="campo"><label>Integrantes</label><input type="text" placeholder="Nombres"></div>
+      <div class="campo"><label>Fecha / Día del sprint</label><input type="text" placeholder="Día 3 - mañana"></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <div class="hud-progreso">
+      <span class="etiqueta">PREPARACIÓN DE LA MISIÓN (requisitos obligatorios)</span>
+      <div class="barra"><div class="barra-rellena" id="barra"></div></div>
+      <span class="pct" id="pct">0%</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>🔒 Requisitos no negociables</h2>
+    <p class="subt">Sin estos dos componentes, el prototipo no cuenta como simulación científica — es solo una animación bonita. Usar datos satelitales reales suma puntos pero ya no es obligatorio; lo que sí es obligatorio es que el juego represente el espacio real de la ciudad. Marca cada punto conforme lo resuelva el equipo.</p>
+
+    <div class="requisitos">
+      <div class="panel-req modelo">
+        <h3>🧮 Componente de modelo matemático</h3>
+        <p class="desc">El sistema ecológico-urbano debe estar representado por variables y reglas que se puedan ejecutar como código, no solo describir en palabras.</p>
+        <ul class="lista-check req-item">
+          <li><input type="checkbox" class="req-check"><span>Identificamos las variables de estado del sistema (ej. cobertura vegetal, mancha urbana, población, disponibilidad de agua).</span></li>
+          <li><input type="checkbox" class="req-check"><span>Definimos las ecuaciones o reglas que describen cómo cambia cada variable en el tiempo (t → t+1).</span></li>
+          <li><input type="checkbox" class="req-check"><span>El modelo incluye al menos un ciclo de retroalimentación (positivo o negativo) entre dos variables.</span></li>
+          <li><input type="checkbox" class="req-check"><span>El modelo corre como código (Python, o la lógica equivalente en JavaScript) y produce números en cada paso.</span></li>
+          <li><input type="checkbox" class="req-check"><span>Las decisiones del jugador modifican parámetros reales del modelo — no son solo animaciones sin efecto numérico.</span></li>
+        </ul>
+      </div>
+
+      <div class="panel-req espacial">
+        <h3>🗺️ Componente espacial</h3>
+        <p class="desc">El juego debe representar el espacio real de tu ciudad, no un escenario genérico inventado. Los datos satelitales son la forma más rica de lograrlo, pero no la única.</p>
+        <ul class="lista-check req-item">
+          <li><input type="checkbox" class="req-check"><span>El juego representa el espacio real de la ciudad mediante un mapa, cuadrícula o coordenadas reconocibles (no un mapa inventado).</span></li>
+          <li><input type="checkbox" class="req-check"><span>Cada zona/celda del mapa tiene al menos un atributo espacial real (uso de suelo, cercanía a un río, densidad, vegetación, etc.).</span></li>
+          <li><input type="checkbox" class="req-check"><span>Ese atributo espacial afecta al modelo (parámetros o condición inicial) — no es solo decoración visual.</span></li>
+          <li><input type="checkbox" class="opt-check"><span><span class="etiqueta-opcional">Opcional</span>Usamos una fuente real de datos satelitales (Sentinel-2, Landsat u otra) para nuestra zona de estudio.</span></li>
+          <li><input type="checkbox" class="opt-check"><span><span class="etiqueta-opcional">Opcional</span>Usamos un índice o producto derivado (NDVI, NDSU, clasificación de cobertura) como dato de entrada.</span></li>
+          <li><input type="checkbox" class="opt-check"><span><span class="etiqueta-opcional">Opcional</span>Incluimos una comparación multitemporal (2+ fechas) de datos satelitales que justifica el escenario.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>📊 Rúbrica de calidad científica</h2>
+    <p class="subt">Instructor o el propio equipo asigna un puntaje por criterio. 0 = incompleto, 1 = en desarrollo, 2 = logrado. Umbral para avanzar a la integración final del componente espacial: 7/10.</p>
+    <table>
+      <tr><th>Criterio</th><th>Qué se evalúa</th><th class="puntaje">Puntaje</th></tr>
+      <tr>
+        <td>Modelo matemático</td>
+        <td>Variables, reglas/ecuaciones y retroalimentación son explícitas y ejecutables.</td>
+        <td class="puntaje"><select><option>–</option><option>0</option><option>1</option><option>2</option></select></td>
+      </tr>
+      <tr>
+        <td>Componente espacial</td>
+        <td>El espacio real de la ciudad afecta al modelo (mapa/atributos); usar datos satelitales suma pero no es obligatorio.</td>
+        <td class="puntaje"><select><option>–</option><option>0</option><option>1</option><option>2</option></select></td>
+      </tr>
+      <tr>
+        <td>Mecánica y escenarios</td>
+        <td>Hay decisiones jugables con consecuencias distintas (mínimo 2 escenarios).</td>
+        <td class="puntaje"><select><option>–</option><option>0</option><option>1</option><option>2</option></select></td>
+      </tr>
+      <tr>
+        <td>Interfaz y jugabilidad</td>
+        <td>El prototipo se entiende y se juega sin explicación extra del equipo.</td>
+        <td class="puntaje"><select><option>–</option><option>0</option><option>1</option><option>2</option></select></td>
+      </tr>
+      <tr>
+        <td>Documentación y narrativa</td>
+        <td>El equipo puede explicar el "por qué" científico detrás del escenario elegido.</td>
+        <td class="puntaje"><select><option>–</option><option>0</option><option>1</option><option>2</option></select></td>
+      </tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>🗓️ Backlog del sprint (Días 3–4)</h2>
+    <p class="subt">El juego se programa directamente en Python o en HTML+JavaScript (según decida el equipo), ya no en el notebook. Anota tareas concretas, responsable y estado en cada sesión.</p>
+
+    <div class="sesion">
+      <div class="cabecera">
+        <span class="cuando">Día 3 · mañana</span>
+        <span class="meta">Modelo numérico del sistema (Python)</span>
+      </div>
+      <table class="tareas">
+        <tr><th>Tarea</th><th style="width:22%">Responsable</th><th style="width:18%">Estado</th></tr>
+        <tr><td><input placeholder="Ej. Programar función de crecimiento de mancha urbana"></td><td><input></td><td><input placeholder="pendiente/en curso/listo"></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td></tr>
+      </table>
+    </div>
+
+    <div class="sesion">
+      <div class="cabecera">
+        <span class="cuando">Día 3 · tarde</span>
+        <span class="meta">Prototipo jugable (Python o HTML+JS)</span>
+      </div>
+      <table class="tareas">
+        <tr><th>Tarea</th><th style="width:22%">Responsable</th><th style="width:18%">Estado</th></tr>
+        <tr><td><input placeholder="Ej. Conectar el tablero visual a la simulación"></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td></tr>
+      </table>
+    </div>
+
+    <div class="sesion">
+      <div class="cabecera">
+        <span class="cuando">Día 4 · mañana</span>
+        <span class="meta">Escenarios y mecánicas de juego</span>
+      </div>
+      <table class="tareas">
+        <tr><th>Tarea</th><th style="width:22%">Responsable</th><th style="width:18%">Estado</th></tr>
+        <tr><td><input placeholder="Ej. Definir 3 escenarios con distintas decisiones iniciales"></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td></tr>
+      </table>
+    </div>
+
+    <div class="sesion">
+      <div class="cabecera">
+        <span class="cuando">Día 4 · tarde · Sección 3</span>
+        <span class="meta">Integración del componente espacial (datos satelitales opcionales)</span>
+      </div>
+      <table class="tareas">
+        <tr><th>Tarea</th><th style="width:22%">Responsable</th><th style="width:18%">Estado</th></tr>
+        <tr><td><input placeholder="Ej. Cargar el mapa/atributos de la zona como condición inicial (con o sin NDVI real)"></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>✅ Checkpoint del instructor</h2>
+    <p class="subt">Se llena al final de cada sesión antes de que el equipo avance de fase.</p>
+    <div class="checkpoint">
+      <div class="semaforo">
+        <label><input type="radio" name="semaforo"> 🔴 Detener — falta un requisito no negociable</label>
+        <label><input type="radio" name="semaforo"> 🟡 Avanzar con ajustes</label>
+        <label><input type="radio" name="semaforo"> 🟢 Listo para la siguiente fase</label>
+      </div>
+      <textarea placeholder="Retroalimentación del instructor: qué falta, qué está sólido, próximo paso concreto..."></textarea>
+    </div>
+  </section>
+
+  <section>
+    <button class="boton" onclick="window.print()">🖨️ Imprimir / guardar como PDF</button>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Curso <strong>Satélites y Sims</strong> · Sección 2: Modelación y Gamificación · <a class="volver" href="index.html">← Volver al inicio</a>
+  </div>
+</footer>
+
+<script>
+  const checks = document.querySelectorAll('.req-check');
+  const barra = document.getElementById('barra');
+  const pct = document.getElementById('pct');
+  function actualizar(){
+    const total = checks.length;
+    const marcados = Array.from(checks).filter(c => c.checked).length;
+    const porcentaje = total ? Math.round((marcados/total)*100) : 0;
+    barra.style.width = porcentaje + '%';
+    pct.textContent = porcentaje + '%';
+  }
+  checks.forEach(c => c.addEventListener('change', actualizar));
+  actualizar();
+</script>
+
+</body>
+</html>
