@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulación numérica y prototipo de videojuego — Día 3</title>
+<meta name="description" content="Explorador interactivo: de un diagrama causal a una simulación numérica en Python, y de la simulación a un prototipo de interfaz de videojuego.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e1a;
+  --bg-panel:#121a2c;
+  --bg-panel-alt:#17213a;
+  --line:#263356;
+  --text:#e8ecf4;
+  --text-dim:#8d9ac2;
+  --amber:#ffb13c;
+  --amber-dim:#8a6a34;
+  --cyan:#4fd8c4;
+  --coral:#ff6b6b;
+  --ok:#4ade80;
+  --mono:'IBM Plex Mono', ui-monospace, monospace;
+  --display:'Space Grotesk', ui-sans-serif, sans-serif;
+  --body:'Inter', ui-sans-serif, sans-serif;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 700px at 85% -10%, #12203a 0%, transparent 60%),
+    radial-gradient(900px 600px at -10% 20%, #14243a 0%, transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  line-height:1.55;
+}
+img{max-width:100%;}
+a{color:var(--cyan);}
+.wrap{max-width:1040px; margin:0 auto; padding:0 22px;}
+
+.topbar{
+  position:sticky; top:0; z-index:50;
+  background:rgba(10,14,26,0.86);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.topbar .wrap{display:flex; align-items:center; justify-content:space-between; padding:12px 22px; gap:12px; flex-wrap:wrap;}
+.topbar .marca{font-family:var(--mono); font-size:.82rem; letter-spacing:.06em; color:var(--text-dim);}
+.topbar .marca b{color:var(--amber); font-weight:600;}
+.topbar .links{display:flex; gap:16px; flex-wrap:wrap;}
+.volver{color:var(--text-dim); text-decoration:none; font-size:.86rem; font-family:var(--mono);}
+.volver:hover{color:var(--cyan);}
+
+.hero{position:relative; border-bottom:1px solid var(--line); padding:54px 0 40px 0; overflow:hidden;}
+.hero::before{
+  content:''; position:absolute; inset:0; z-index:0; opacity:.5;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(79,216,196,0.06) 39px, transparent 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(79,216,196,0.06) 39px, transparent 40px);
+}
+.hero .wrap{position:relative; z-index:1;}
+.eyebrow{
+  font-family:var(--mono); font-size:.78rem; letter-spacing:.12em; color:var(--amber);
+  text-transform:uppercase; display:inline-block; margin-bottom:14px;
+  border:1px solid var(--amber-dim); padding:3px 10px; border-radius:3px; background:rgba(255,177,60,0.08);
+}
+.hero h1{font-family:var(--display); font-size:clamp(1.7rem,4.4vw,2.7rem); line-height:1.1; margin:0 0 14px 0; max-width:760px;}
+.hero p.tagline{max-width:640px; color:var(--text-dim); font-size:1rem; margin:0;}
+
+main{padding:10px 0 80px 0;}
+section.modulo{padding:52px 0; border-bottom:1px solid var(--line);}
+section.modulo:last-of-type{border-bottom:none;}
+.modulo .chan{
+  font-family:var(--mono); font-size:.76rem; letter-spacing:.08em; color:var(--cyan);
+  display:inline-flex; align-items:center; gap:8px; margin-bottom:12px;
+}
+.modulo .chan .dot{width:7px; height:7px; border-radius:50%; background:var(--cyan); box-shadow:0 0 8px var(--cyan);}
+.modulo h2{font-family:var(--display); font-size:clamp(1.3rem,2.6vw,1.9rem); margin:0 0 10px 0;}
+.modulo .intro{color:var(--text-dim); max-width:680px; margin:0 0 24px 0;}
+.panel{
+  background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-alt) 100%);
+  border:1px solid var(--line); border-radius:10px; padding:22px;
+}
+.grid2{display:grid; grid-template-columns:1.1fr 1fr; gap:22px;}
+@media (max-width:760px){.grid2{grid-template-columns:1fr;}}
+
+label.ctl{display:block; font-family:var(--mono); font-size:.78rem; color:var(--text-dim); margin-bottom:6px;}
+input[type=range]{
+  -webkit-appearance:none; width:100%; height:4px; border-radius:2px;
+  background:var(--line); outline:none; margin:6px 0 14px 0;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+  background:var(--amber); border:2px solid #0a0e1a; cursor:pointer; box-shadow:0 0 6px rgba(255,177,60,.6);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px; height:16px; border-radius:50%; background:var(--amber); border:2px solid #0a0e1a; cursor:pointer;
+}
+.readout{font-family:var(--mono); font-size:.9rem; color:var(--amber);}
+.readout .u{color:var(--text-dim); font-size:.78rem;}
+
+.btnrow{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+.chip{
+  font-family:var(--mono); font-size:.78rem; padding:7px 12px; border-radius:20px;
+  border:1px solid var(--line); background:transparent; color:var(--text-dim); cursor:pointer;
+  transition:all .15s ease;
+}
+.chip:hover{border-color:var(--cyan); color:var(--text);}
+.chip.activo{background:var(--cyan); border-color:var(--cyan); color:#08201c; font-weight:600;}
+.chip.tono-verde.activo{background:var(--ok); border-color:var(--ok);}
+.chip.tono-urbano.activo{background:var(--text-dim); border-color:var(--text-dim);}
+.chip.tono-agua.activo{background:#4fa8d8; border-color:#4fa8d8;}
+
+canvas.viz{width:100%; display:block; border-radius:6px; background:#060a13; border:1px solid var(--line); cursor:pointer;}
+.nota{font-size:.86rem; color:var(--text-dim); margin-top:14px; padding-top:14px; border-top:1px dashed var(--line);}
+.nota b{color:var(--text);}
+
+.stat-grande{font-family:var(--mono); font-size:1.4rem; color:var(--amber); margin:4px 0 2px 0;}
+.stat-lbl{font-family:var(--mono); font-size:.72rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em;}
+
+.stats-fila{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:14px; margin:16px 0;}
+.stat-card{background:var(--bg-panel-alt); border:1px solid var(--line); border-radius:8px; padding:10px 14px;}
+
+pre.codigo{
+  background:#060a13; border:1px solid var(--line); border-radius:8px; padding:16px 18px;
+  font-family:var(--mono); font-size:.82rem; color:#c6d2ee; overflow-x:auto; line-height:1.6;
+}
+pre.codigo .kw{color:#ff8fb3;}
+pre.codigo .fn{color:#4fd8c4;}
+pre.codigo .cm{color:#5c6a8f; font-style:italic;}
+pre.codigo .num{color:#ffb13c;}
+
+.recurso-card{
+  display:flex; justify-content:space-between; align-items:flex-start; gap:14px;
+  border:1px solid var(--line); border-radius:9px; padding:14px 16px; margin-bottom:10px; background:var(--bg-panel);
+}
+.recurso-card h4{margin:0 0 4px 0; font-family:var(--display); font-size:1rem;}
+.recurso-card p{margin:0; color:var(--text-dim); font-size:.86rem;}
+.recurso-card a.boton{
+  flex-shrink:0; font-family:var(--mono); font-size:.76rem; color:var(--cyan); text-decoration:none;
+  border:1px solid var(--cyan); padding:6px 12px; border-radius:20px; white-space:nowrap;
+}
+.recurso-card a.boton:hover{background:var(--cyan); color:#08201c;}
+
+.quiz-item{border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:16px; background:var(--bg-panel);}
+.quiz-item h3{font-family:var(--display); font-size:1.02rem; margin:0 0 14px 0; font-weight:600;}
+.opciones{display:grid; gap:8px;}
+.opcion{
+  text-align:left; font-family:var(--body); font-size:.92rem; color:var(--text);
+  background:var(--bg-panel-alt); border:1px solid var(--line); border-radius:7px; padding:10px 14px;
+  cursor:pointer; transition:all .12s ease;
+}
+.opcion:hover{border-color:var(--cyan);}
+.opcion.correcta{border-color:var(--ok); background:rgba(74,222,128,0.12); color:var(--ok);}
+.opcion.incorrecta{border-color:var(--coral); background:rgba(255,107,107,0.12); color:var(--coral);}
+.opcion:disabled{cursor:default;}
+.feedback{font-family:var(--mono); font-size:.8rem; margin-top:10px; min-height:1.2em;}
+.feedback.ok{color:var(--ok);}
+.feedback.bad{color:var(--coral);}
+.marcador{
+  position:sticky; top:57px; z-index:40; display:flex; justify-content:space-between; align-items:center;
+  background:var(--bg-panel); border:1px solid var(--line); border-radius:8px; padding:10px 16px; margin-bottom:20px;
+  font-family:var(--mono); font-size:.84rem; flex-wrap:wrap; gap:8px;
+}
+.marcador b{color:var(--amber);}
+.reiniciar{
+  font-family:var(--mono); font-size:.78rem; color:var(--text-dim); background:transparent;
+  border:1px solid var(--line); border-radius:6px; padding:6px 12px; cursor:pointer;
+}
+.reiniciar:hover{border-color:var(--amber); color:var(--amber);}
+
+footer{border-top:1px solid var(--line); padding:26px 0; color:var(--text-dim); font-size:.85rem; font-family:var(--mono);}
+footer a{color:var(--text-dim); text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="marca">CH · <b>Día 3</b> — Simulación numérica y prototipo de videojuego</div>
+    <div class="links">
+      <a class="volver" href="distorsion-proyecciones.html">↩ Día 2: distorsión y proyecciones</a>
+      <a class="volver" href="dia2-modelacion-presentacion.html">↩ Día 2 tarde: modelación</a>
+      <a class="volver" href="index.html">← Volver al inicio</a>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Explorador interactivo · Día 3</div>
+    <h1>De ecuaciones en una pantalla a un mapa que puedes tocar</h1>
+    <p class="tagline">Ayer formalizamos el diagrama causal en variables y relaciones. Hoy en la mañana esas relaciones se vuelven código que simula el tiempo paso a paso; en la tarde, esa simulación se convierte en el primer prototipo visual de tu videojuego.</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ 15. DE CAUSAS A ECUACIONES ============ -->
+  <section class="modulo wrap" id="ecuaciones">
+    <div class="chan"><span class="dot"></span>CH-15 · DE FLECHAS A NÚMEROS</div>
+    <h2>Un diagrama causal dice "qué afecta a qué". Una simulación necesita "cuánto"</h2>
+    <p class="intro">Tu diagrama del Notebook 1 tiene flechas como <b>+población → −área verde</b>. Para que la computadora pueda avanzar el tiempo, cada flecha necesita convertirse en una ecuación: un número que sube o baja un poquito en cada paso, según el estado actual del sistema.</p>
+    <div class="panel">
+      <pre class="codigo"><span class="cm"># Cada variable del diagrama causal se vuelve un atributo del estado</span>
+<span class="kw">class</span> <span class="fn">EcosistemaUrbano</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.poblacion = <span class="num">10000</span>
+        self.area_verde = <span class="num">0.65</span>      <span class="cm"># fracción del terreno, 0 a 1</span>
+        self.contaminacion = <span class="num">0.10</span>
+
+    <span class="kw">def</span> <span class="fn">paso</span>(self, tasa_crecimiento, presion_urbana):
+        <span class="cm"># cada flecha del diagrama = una línea de código</span>
+        self.poblacion += self.poblacion * tasa_crecimiento
+        self.area_verde -= presion_urbana * (self.poblacion / <span class="num">100000</span>)
+        self.contaminacion += (<span class="num">1</span> - self.area_verde) * <span class="num">0.02</span>
+        self.area_verde = max(<span class="num">0</span>, self.area_verde)</pre>
+      <div class="nota">Esto es exactamente lo que construirás en el <b>Notebook 2</b> con NumPy: un objeto con estado que cambia en cada "tick" del tiempo, siguiendo las mismas relaciones que ya dibujaste como flechas.</div>
+    </div>
+  </section>
+
+  <!-- ============ 16. SIMULACIÓN PASO A PASO ============ -->
+  <section class="modulo wrap" id="simulacion">
+    <div class="chan"><span class="dot"></span>CH-16 · SIMULACIÓN NUMÉRICA PASO A PASO</div>
+    <h2>Mueve los controles y observa cómo cambia el futuro de la ciudad</h2>
+    <p class="intro">Esta es una versión simplificada del modelo de arriba, corriendo en vivo. Ajusta la tasa de crecimiento poblacional y la presión urbana sobre el suelo, y observa las tres variables durante 40 pasos de tiempo (por ejemplo, 40 años).</p>
+    <div class="panel grid2">
+      <div>
+        <canvas class="viz" id="canvas-sim" width="480" height="300"></canvas>
+        <div class="stats-fila">
+          <div class="stat-card"><div class="stat-lbl">Población final</div><div class="stat-grande" id="stat-poblacion">—</div></div>
+          <div class="stat-card"><div class="stat-lbl">Área verde final</div><div class="stat-grande" id="stat-verde">—</div></div>
+          <div class="stat-card"><div class="stat-lbl">Contaminación final</div><div class="stat-grande" id="stat-contaminacion">—</div></div>
+        </div>
+      </div>
+      <div>
+        <label class="ctl">Tasa de crecimiento poblacional (por paso)</label>
+        <input type="range" id="rango-crecimiento" min="0" max="8" value="3" step="1">
+        <div class="readout"><span id="valor-crecimiento">3</span><span class="u">%</span></div>
+
+        <label class="ctl">Presión urbana sobre el suelo</label>
+        <input type="range" id="rango-presion" min="0" max="10" value="4" step="1">
+        <div class="readout"><span id="valor-presion">4</span><span class="u">/10</span></div>
+
+        <div class="nota">Prueba subir la presión urbana al máximo manteniendo el crecimiento bajo, y luego al revés. ¿En qué combinación el área verde llega a cero antes del paso 40? Esa es la misma pregunta que explorará tu Notebook 2 con datos reales de tu ciudad.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 17. PROTOTIPO DE INTERFAZ ============ -->
+  <section class="modulo wrap" id="prototipo">
+    <div class="chan"><span class="dot"></span>CH-17 · DEL MODELO A LA PANTALLA</div>
+    <h2>Un mapa que puedes pintar es más fácil de entender que una tabla de números</h2>
+    <p class="intro">La simulación de arriba es correcta, pero abstracta. La tarde de hoy la traduces en algo que se ve y se toca: una cuadrícula donde cada celda es un tipo de suelo. Elige una herramienta y pinta el mapa — los indicadores de la derecha se recalculan al instante, igual que hará tu prototipo del <b>Notebook 3</b>.</p>
+    <div class="panel grid2">
+      <div>
+        <div class="btnrow" id="botones-herramienta"></div>
+        <canvas class="viz" id="canvas-mapa" width="480" height="360"></canvas>
+      </div>
+      <div>
+        <div class="stat-lbl">Cobertura verde</div>
+        <div class="stat-grande"><span id="pct-verde">—</span><span style="font-size:.9rem;color:var(--text-dim);">%</span></div>
+        <div class="stat-lbl" style="margin-top:10px;">Cobertura urbana</div>
+        <div class="stat-grande"><span id="pct-urbano">—</span><span style="font-size:.9rem;color:var(--text-dim);">%</span></div>
+        <div class="stat-lbl" style="margin-top:10px;">Cuerpos de agua</div>
+        <div class="stat-grande"><span id="pct-agua">—</span><span style="font-size:.9rem;color:var(--text-dim);">%</span></div>
+        <div class="nota">En un prototipo real, estos tres números alimentarían de vuelta a la clase <code>EcosistemaUrbano</code>: pintar más urbano subiría la presión sobre el suelo; pintar más verde la bajaría. Esa conexión —de la pantalla de vuelta al modelo— es el corazón de un videojuego de simulación.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 18. DE PROTOTIPO A MECÁNICA ============ -->
+  <section class="modulo wrap" id="mecanica">
+    <div class="chan"><span class="dot"></span>CH-18 · DE PROTOTIPO A MECÁNICA DE JUEGO</div>
+    <h2>Un prototipo responde al mouse; un juego responde a decisiones con consecuencias</h2>
+    <p class="intro">El mapa que acabas de pintar ya es interactivo, pero todavía no es un juego: no hay turnos, ni presupuesto, ni consecuencias que se acumulen con el tiempo. Esa es exactamente la diferencia entre el <b>Notebook 3</b> (prototipo de interfaz, hoy) y el <b>Notebook 4</b> (escenarios y mecánicas, mañana).</p>
+    <div class="panel">
+      <table style="width:100%; border-collapse:collapse; font-size:.9rem;">
+        <tr style="border-bottom:1px solid var(--line);"><th style="text-align:left; padding:8px; color:var(--text-dim); font-family:var(--mono); font-size:.78rem;">Elemento</th><th style="text-align:left; padding:8px; color:var(--text-dim); font-family:var(--mono); font-size:.78rem;">Hoy: prototipo (Notebook 3)</th><th style="text-align:left; padding:8px; color:var(--text-dim); font-family:var(--mono); font-size:.78rem;">Mañana: mecánica (Notebook 4)</th></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px;">Tiempo</td><td style="padding:8px;">Reacciona al instante al clic</td><td style="padding:8px;">Avanza por turnos con un botón "siguiente año"</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px;">Recursos</td><td style="padding:8px;">Pintar es gratis e ilimitado</td><td style="padding:8px;">Cada acción cuesta presupuesto limitado</td></tr>
+        <tr style="border-bottom:1px solid var(--line);"><td style="padding:8px;">Consecuencias</td><td style="padding:8px;">Solo cambia el color de la celda</td><td style="padding:8px;">Actualiza población, contaminación e indicadores del Notebook 2</td></tr>
+        <tr><td style="padding:8px;">Objetivo</td><td style="padding:8px;">Ninguno — es solo explorar</td><td style="padding:8px;">3+ escenarios con metas distintas (crecer, conservar, equilibrar)</td></tr>
+      </table>
+      <div class="nota">Guarda esta pregunta para mañana: ¿qué decisión sencilla (una herramienta, un botón) podría tener la consecuencia más interesante en tu ciudad? Ese suele ser el germen de la mecánica principal de un buen videojuego de simulación.</div>
+    </div>
+  </section>
+
+  <!-- ============ RECURSOS EXTERNOS ============ -->
+  <section class="modulo wrap" id="recursos">
+    <div class="chan"><span class="dot"></span>RECURSOS PARA SEGUIR EXPLORANDO</div>
+    <h2>Herramientas y lecturas externas</h2>
+    <p class="intro">Para profundizar por tu cuenta en simulación numérica, pensamiento sistémico y prototipado de interfaces.</p>
+
+    <div class="recurso-card">
+      <div><h4>NumPy — documentación oficial</h4><p>La librería que usarás en el Notebook 2 para representar el estado de tu simulación como arreglos numéricos eficientes.</p></div>
+      <a class="boton" href="https://numpy.org/doc/stable/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+    <div class="recurso-card">
+      <div><h4>Insight Maker</h4><p>Plataforma web gratuita para construir diagramas causales y convertirlos directamente en simulaciones de dinámica de sistemas — sin escribir código.</p></div>
+      <a class="boton" href="https://insightmaker.com/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+    <div class="recurso-card">
+      <div><h4>The Systems Thinker: Causal Loop Construction</h4><p>Guía clásica y breve sobre cómo convertir una historia causal en un diagrama de lazos de retroalimentación bien construido.</p></div>
+      <a class="boton" href="https://thesystemsthinker.com/causal-loop-construction-the-basics/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+    <div class="recurso-card">
+      <div><h4>Pygame — documentación oficial</h4><p>Si tu equipo prefiere construir el prototipo del videojuego en Python en lugar de HTML/JS, esta es la librería estándar para mapas 2D interactivos.</p></div>
+      <a class="boton" href="https://www.pygame.org/docs/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+    <div class="recurso-card">
+      <div><h4>MDN: Canvas API</h4><p>Referencia completa de la API que usa esta misma página para dibujar la gráfica de simulación y el mapa pintable — útil si tu equipo elige la ruta de HTML/JS.</p></div>
+      <a class="boton" href="https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+    <div class="recurso-card">
+      <div><h4>Dashboard: vulnerabilidad al cambio climático (CEDO)</h4><p>Un ejemplo real de cómo una simulación/análisis de datos termina convertido en un panel interactivo que otras personas pueden explorar.</p></div>
+      <a class="boton" href="https://cedo.shinyapps.io/vulnerability_cc_dash/" target="_blank" rel="noopener">Abrir ↗</a>
+    </div>
+
+    <div class="recurso-card" style="border-style:dashed; border-color:var(--amber-dim);">
+      <div><h4>Notebook 2: Simulación numérica</h4><p>Traduce hoy mismo la clase <code>EcosistemaUrbano</code> de este explorador a un modelo completo con NumPy, usando las variables de tu propio diagrama causal.</p></div>
+      <a class="boton" href="https://colab.research.google.com/drive/1g7cU6h3Zk5bddgj7ObUFdkQ2Xx-XJ2zH" target="_blank" rel="noopener">Abrir en Colab ↗</a>
+    </div>
+    <div class="recurso-card" style="border-style:dashed; border-color:var(--amber-dim);">
+      <div><h4>Notebook 3: Prototipo del videojuego</h4><p>Construye la versión real del mapa interactivo de la Sección CH-17, conectada a tu propia simulación.</p></div>
+      <a class="boton" href="https://colab.research.google.com/drive/1SPewLWwFuaRrbnvnoVvlqjuMp_74hAEz" target="_blank" rel="noopener">Abrir en Colab ↗</a>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="modulo wrap" id="repaso">
+    <div class="chan"><span class="dot"></span>REPASO</div>
+    <h2>Ponte a prueba</h2>
+    <p class="intro">Preguntas rápidas sobre simulación numérica y prototipado de interfaces.</p>
+    <div class="marcador">
+      <span>Puntaje: <b id="puntaje">0</b> / <span id="total-preguntas">7</span></span>
+      <button class="reiniciar" id="btn-reiniciar">Reiniciar quiz</button>
+    </div>
+    <div id="lista-quiz"></div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Página de apoyo del curso <strong>Satélites y Sims</strong> · <a href="index.html">← Volver al inicio</a> · <a href="distorsion-proyecciones.html">Día 2: distorsión y proyecciones</a> · <a href="syllabus.html">Ver carta descriptiva</a>
+  </div>
+</footer>
+
+<script>
+/* =======================================================================
+   16. SIMULACIÓN PASO A PASO
+   ======================================================================= */
+const cvSim = document.getElementById('canvas-sim');
+const ctxSim = cvSim.getContext('2d');
+const rangoCrecimiento = document.getElementById('rango-crecimiento');
+const rangoPresion = document.getElementById('rango-presion');
+const valorCrecimiento = document.getElementById('valor-crecimiento');
+const valorPresion = document.getElementById('valor-presion');
+const statPoblacion = document.getElementById('stat-poblacion');
+const statVerde = document.getElementById('stat-verde');
+const statContaminacion = document.getElementById('stat-contaminacion');
+
+const N_PASOS = 40;
+
+function correrSimulacion(tasaCrecimiento, presionUrbana){
+  let poblacion = 10000, areaVerde = 0.65, contaminacion = 0.10;
+  const serie = { poblacion:[poblacion], verde:[areaVerde], contaminacion:[contaminacion] };
+  for (let t=0; t<N_PASOS; t++){
+    poblacion += poblacion * tasaCrecimiento;
+    areaVerde -= presionUrbana * (poblacion/100000) * 0.01;
+    areaVerde = Math.max(0, Math.min(1, areaVerde));
+    contaminacion += (1-areaVerde) * 0.012;
+    contaminacion = Math.max(0, Math.min(1, contaminacion));
+    serie.poblacion.push(poblacion);
+    serie.verde.push(areaVerde);
+    serie.contaminacion.push(contaminacion);
+  }
+  return serie;
+}
+
+function dibujarLinea(ctx, w, h, datos, color, minY, maxY, padL, padR, padT, padB){
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  datos.forEach((v,i)=>{
+    const x = padL + (i/(datos.length-1)) * (w-padL-padR);
+    const yNorm = (v-minY)/(maxY-minY || 1);
+    const y = h-padB - yNorm*(h-padT-padB);
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+}
+
+function actualizarSimulacion(){
+  const tasa = +rangoCrecimiento.value/100;
+  const presion = +rangoPresion.value;
+  valorCrecimiento.textContent = rangoCrecimiento.value;
+  valorPresion.textContent = rangoPresion.value;
+
+  const serie = correrSimulacion(tasa, presion);
+  const w = cvSim.width, h = cvSim.height;
+  const padL=8, padR=8, padT=10, padB=10;
+
+  ctxSim.clearRect(0,0,w,h);
+  ctxSim.strokeStyle = '#1a2440';
+  for (let i=1;i<4;i++){
+    const y = padT + (i/4)*(h-padT-padB);
+    ctxSim.beginPath(); ctxSim.moveTo(padL,y); ctxSim.lineTo(w-padR,y); ctxSim.stroke();
+  }
+
+  dibujarLinea(ctxSim, w,h, serie.verde, '#4ade80', 0, 1, padL,padR,padT,padB);
+  dibujarLinea(ctxSim, w,h, serie.contaminacion, '#ff6b6b', 0, 1, padL,padR,padT,padB);
+  const maxPob = Math.max(...serie.poblacion);
+  dibujarLinea(ctxSim, w,h, serie.poblacion, '#ffb13c', 0, maxPob*1.05, padL,padR,padT,padB);
+
+  ctxSim.font = '11px IBM Plex Mono, monospace';
+  ctxSim.fillStyle = '#ffb13c'; ctxSim.fillText('— población', 14, 22);
+  ctxSim.fillStyle = '#4ade80'; ctxSim.fillText('— área verde', 14, 36);
+  ctxSim.fillStyle = '#ff6b6b'; ctxSim.fillText('— contaminación', 14, 50);
+
+  statPoblacion.textContent = Math.round(serie.poblacion[N_PASOS]).toLocaleString('es-MX');
+  statVerde.textContent = Math.round(serie.verde[N_PASOS]*100)+'%';
+  statContaminacion.textContent = Math.round(serie.contaminacion[N_PASOS]*100)+'%';
+}
+
+rangoCrecimiento.addEventListener('input', actualizarSimulacion);
+rangoPresion.addEventListener('input', actualizarSimulacion);
+actualizarSimulacion();
+
+/* =======================================================================
+   17. PROTOTIPO DE INTERFAZ: MAPA PINTABLE
+   ======================================================================= */
+const cvMapa = document.getElementById('canvas-mapa');
+const ctxMapa = cvMapa.getContext('2d');
+const COLS = 12, ROWS = 9;
+const CW = cvMapa.width/COLS, CH_ = cvMapa.height/ROWS;
+
+const herramientas = [
+  {id:'verde', nombre:'🌳 Verde', color:'#2f7a4f', clase:'tono-verde'},
+  {id:'urbano', nombre:'🏙️ Urbano', color:'#5c6a8f', clase:'tono-urbano'},
+  {id:'agua', nombre:'💧 Agua', color:'#2f6fa8', clase:'tono-agua'},
+];
+let herramientaActiva = 'verde';
+
+// mapa inicial: mayormente verde, un río, y una zona urbana semilla
+let mapa = [];
+for (let r=0;r<ROWS;r++){
+  mapa.push([]);
+  for (let c=0;c<COLS;c++){
+    let tipo = 'verde';
+    if (c===5 || c===6) tipo='agua';
+    if (r<2 && c<3) tipo='urbano';
+    mapa[r].push(tipo);
+  }
+}
+
+const botonesHerramienta = document.getElementById('botones-herramienta');
+herramientas.forEach(h=>{
+  const b = document.createElement('button');
+  b.className = 'chip '+h.clase+(h.id===herramientaActiva?' activo':'');
+  b.textContent = h.nombre;
+  b.addEventListener('click', ()=>{
+    herramientaActiva = h.id;
+    botonesHerramienta.querySelectorAll('.chip').forEach(x=>x.classList.remove('activo'));
+    b.classList.add('activo');
+  });
+  botonesHerramienta.appendChild(b);
+});
+
+function colorDe(tipo){
+  return herramientas.find(h=>h.id===tipo).color;
+}
+
+function dibujarMapa(){
+  for (let r=0;r<ROWS;r++){
+    for (let c=0;c<COLS;c++){
+      ctxMapa.fillStyle = colorDe(mapa[r][c]);
+      ctxMapa.fillRect(c*CW, r*CH_, CW-1, CH_-1);
+    }
+  }
+  actualizarIndicadores();
+}
+
+function actualizarIndicadores(){
+  let cont = {verde:0, urbano:0, agua:0};
+  mapa.forEach(fila=>fila.forEach(t=>cont[t]++));
+  const total = COLS*ROWS;
+  document.getElementById('pct-verde').textContent = Math.round(cont.verde/total*100);
+  document.getElementById('pct-urbano').textContent = Math.round(cont.urbano/total*100);
+  document.getElementById('pct-agua').textContent = Math.round(cont.agua/total*100);
+}
+
+function pintarEn(evt){
+  const rect = cvMapa.getBoundingClientRect();
+  const escalaX = cvMapa.width/rect.width, escalaY = cvMapa.height/rect.height;
+  const x = (evt.clientX-rect.left)*escalaX;
+  const y = (evt.clientY-rect.top)*escalaY;
+  const c = Math.floor(x/CW), r = Math.floor(y/CH_);
+  if (r>=0 && r<ROWS && c>=0 && c<COLS){
+    mapa[r][c] = herramientaActiva;
+    dibujarMapa();
+  }
+}
+
+let pintando = false;
+cvMapa.addEventListener('mousedown', e=>{pintando=true; pintarEn(e);});
+cvMapa.addEventListener('mousemove', e=>{if(pintando) pintarEn(e);});
+window.addEventListener('mouseup', ()=>pintando=false);
+cvMapa.addEventListener('touchstart', e=>{pintarEn(e.touches[0]); e.preventDefault();}, {passive:false});
+cvMapa.addEventListener('touchmove', e=>{pintarEn(e.touches[0]); e.preventDefault();}, {passive:false});
+
+dibujarMapa();
+
+/* =======================================================================
+   QUIZ
+   ======================================================================= */
+const preguntas = [
+  {
+    q:'¿Qué representa cada flecha de un diagrama causal cuando se traduce a código de simulación?',
+    opciones:[
+      'Un comentario opcional que no afecta el resultado',
+      'Una línea de código que actualiza una variable de estado según otra',
+      'El nombre de una función que no se ejecuta',
+      'Un error que hay que corregir'
+    ],
+    correcta:1,
+    exp:'Cada flecha "A afecta a B" se convierte en una línea que recalcula B usando el valor actual de A, dentro del método que avanza un paso de tiempo.'
+  },
+  {
+    q:'En la clase EcosistemaUrbano de este explorador, ¿qué hace el método paso()?',
+    opciones:[
+      'Dibuja el mapa en pantalla',
+      'Avanza el estado del sistema un intervalo de tiempo, aplicando las relaciones causales',
+      'Pide al usuario que ingrese datos por teclado',
+      'Guarda el archivo en Google Drive'
+    ],
+    correcta:1,
+    exp:'paso() es el corazón de cualquier simulación de dinámica de sistemas: toma el estado actual y calcula el siguiente, un tick a la vez.'
+  },
+  {
+    q:'¿Por qué NumPy es útil para simulaciones numéricas en Python, comparado con listas normales?',
+    opciones:[
+      'Porque solo funciona con texto',
+      'Porque permite operar sobre arreglos completos de números de forma rápida y compacta',
+      'Porque reemplaza la necesidad de escribir cualquier fórmula',
+      'Porque solo se puede usar dentro de Google Colab'
+    ],
+    correcta:1,
+    exp:'NumPy permite aplicar una operación a un arreglo entero de valores a la vez (vectorización), lo cual es mucho más rápido que recorrer una lista con un ciclo tradicional.'
+  },
+  {
+    q:'En el mapa pintable de esta página, ¿qué representa cada celda de la cuadrícula?',
+    opciones:[
+      'Un jugador distinto',
+      'Una unidad de suelo con un tipo de cobertura (verde, urbano o agua)',
+      'Un paso de tiempo de la simulación',
+      'Una pregunta del quiz'
+    ],
+    correcta:1,
+    exp:'Cada celda es una unidad espacial simplificada del terreno — la misma idea detrás de un píxel de imagen satelital o una parcela en un modelo de uso de suelo.'
+  },
+  {
+    q:'¿Cuál es la diferencia principal entre el prototipo de interfaz (Notebook 3) y la simulación numérica (Notebook 2)?',
+    opciones:[
+      'No hay ninguna diferencia real',
+      'El prototipo da una representación visual e interactiva; la simulación calcula los números detrás de esa representación',
+      'El prototipo reemplaza por completo a la simulación',
+      'La simulación solo sirve para hacer gráficas, nunca para tomar decisiones'
+    ],
+    correcta:1,
+    exp:'El prototipo es la "cara" visual del sistema; la simulación numérica es el "cerebro" que calcula cómo cambia el estado con el tiempo. Un buen videojuego conecta ambos.'
+  },
+  {
+    q:'Según la tabla comparativa de esta página, ¿qué le falta a un prototipo de interfaz para convertirse en una mecánica de juego completa?',
+    opciones:[
+      'Colores más bonitos',
+      'Turnos, recursos limitados y consecuencias acumuladas con el tiempo',
+      'Un logotipo del equipo',
+      'Más archivos de audio'
+    ],
+    correcta:1,
+    exp:'Un juego necesita que las decisiones tengan costo y efecto a lo largo del tiempo — eso es justo lo que añade el Notebook 4 (escenarios y mecánicas) mañana.'
+  },
+  {
+    q:'¿Qué tipo de retroalimentación estás viendo si, al subir la presión urbana en el simulador de esta página, el área verde baja y la contaminación sube?',
+    opciones:[
+      'Ninguna, son variables independientes',
+      'Una cadena de causas y efectos conectados, típica de un sistema con retroalimentación',
+      'Un error de programación en el simulador',
+      'Una coincidencia sin relación causal'
+    ],
+    correcta:1,
+    exp:'Presión urbana → menos área verde → más contaminación es exactamente el tipo de cadena causal que un diagrama de lazos de retroalimentación busca capturar.'
+  },
+];
+
+const listaQuiz = document.getElementById('lista-quiz');
+const elPuntaje = document.getElementById('puntaje');
+document.getElementById('total-preguntas').textContent = preguntas.length;
+let puntaje = 0;
+let respondidas = new Set();
+
+function renderQuiz(){
+  listaQuiz.innerHTML='';
+  puntaje = 0; respondidas.clear();
+  elPuntaje.textContent = puntaje;
+  preguntas.forEach((p, idx)=>{
+    const item = document.createElement('div');
+    item.className='quiz-item';
+    const h3 = document.createElement('h3');
+    h3.textContent = `${idx+1}. ${p.q}`;
+    item.appendChild(h3);
+    const opts = document.createElement('div');
+    opts.className='opciones';
+    const feedback = document.createElement('div');
+    feedback.className='feedback';
+
+    p.opciones.forEach((texto, oIdx)=>{
+      const b = document.createElement('button');
+      b.className='opcion';
+      b.textContent = texto;
+      b.addEventListener('click', ()=>{
+        if (respondidas.has(idx)) return;
+        respondidas.add(idx);
+        const botones = opts.querySelectorAll('.opcion');
+        botones.forEach((bt,i2)=>{
+          bt.disabled = true;
+          if (i2===p.correcta) bt.classList.add('correcta');
+        });
+        if (oIdx===p.correcta){
+          puntaje++;
+          feedback.textContent = '✓ Correcto. '+p.exp;
+          feedback.className='feedback ok';
+        } else {
+          b.classList.add('incorrecta');
+          feedback.textContent = '✗ '+p.exp;
+          feedback.className='feedback bad';
+        }
+        elPuntaje.textContent = puntaje;
+      });
+      opts.appendChild(b);
+    });
+    item.appendChild(opts);
+    item.appendChild(feedback);
+    listaQuiz.appendChild(item);
+  });
+}
+document.getElementById('btn-reiniciar').addEventListener('click', renderQuiz);
+renderQuiz();
+</script>
+</body>
+</html>
